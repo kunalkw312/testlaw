@@ -188,27 +188,16 @@
 
         /* ================= CUSTOM UI SYSTEM (SELECTS, TOASTS, MODALS) ================= */
         
-        /* Premium Custom Dropdown Styling */
+        /* Custom Dropdown Styling */
         .custom-select-container { position: relative; width: 100%; }
-        .custom-select-trigger { padding: 14px; background: #f8f9fa; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; color: #333; transition: all 0.3s; }
-        .custom-select-container.open-select .custom-select-trigger { border-color: #0d6efd; background: #fff; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
-        .custom-select-trigger span.arrow { transition: transform 0.3s ease; font-size: 0.75em; color: #64748b; margin-left: 10px; }
-        .custom-select-container.open-select .custom-select-trigger span.arrow { transform: rotate(180deg); color: #0d6efd; }
-        .custom-select-options { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1050; display: none; max-height: 250px; overflow-y: auto; }
+        .custom-select-trigger { padding: 14px 20px; background: #f8f9fa; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; color: #4a5568; transition: all 0.3s; }
+        .custom-select-trigger:hover { border-color: #0d6efd; background: #fff; }
+        .custom-select-options { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; display: none; max-height: 250px; overflow-y: auto; }
         .custom-select-options.open { display: block; animation: slideDown 0.2s ease; }
-        .custom-option { padding: 12px 14px; cursor: pointer; transition: background 0.2s, color 0.2s; font-size: 0.95em; color: #4a5568; }
+        .custom-option { padding: 12px 20px; cursor: pointer; transition: background 0.2s; font-size: 0.95em; color: #334155; }
         .custom-option:hover { background: #f1f5f9; color: #0d6efd; }
-        .custom-option.selected { background: #e0f2fe; font-weight: 600; color: #0d6efd; }
+        .custom-option.selected { background: #e0f2fe; font-weight: 600; color: #0369a1; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Direct Drag & Drop Image Upload CSS */
-        .image-dropzone { border: 2px dashed #cbd5e1; padding: 25px 20px; text-align: center; border-radius: 6px; background: #f8f9fa; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
-        .image-dropzone:hover { border-color: #0d6efd; background: #fff; }
-        .image-dropzone span.icon { font-size: 1.8em; color: #64748b; }
-        .image-preview-container { display: none; position: relative; margin-top: 10px; border-radius: 6px; overflow: hidden; max-height: 180px; border: 1px solid #e2e8f0; background: #f1f5f9; }
-        .image-preview-container img { width: 100%; height: 100%; max-height: 178px; object-fit: cover; display: block; }
-        .image-preview-container .remove-img-btn { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.8em; cursor: pointer; font-weight: 600; transition: background 0.2s; }
-        .image-preview-container .remove-img-btn:hover { background: #bd2130; }
 
         /* Toast Notifications */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -277,7 +266,7 @@
         </div>
         <nav id="mainNav">
             <a href="#home" onclick="navigateToPage('home'); return false;" class="active-nav">Home</a>
-            <a href="#cases" onclick="navigateToPage('cases'); return false;">Active investigations</a>
+            <a href="#cases" onclick="navigateToPage('cases'); return false;">Cases</a>
             <a href="#about" onclick="navigateToPage('about'); return false;">About</a>
             <a href="#connect" onclick="navigateToPage('connect'); return false;">Connect</a>
         </nav>
@@ -344,12 +333,7 @@
                 <input type="text" id="frontendSearchCases" placeholder="Search parameters (e.g., Pharma, Defect)...">
                 <select id="frontendFilterCases">
                     <option value="All">All Categories</option>
-                    <option value="Civil Litigation">Civil Litigation</option>
-                    <option value="Criminal Cases">Criminal Cases</option>
-                    <option value="Family Law">Family Law</option>
-                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                </select>
+                    </select>
             </div>
 
             <div class="cases-grid" id="frontendCasesList"></div>
@@ -472,12 +456,7 @@
             <div class="full-width">
                 <select id="globalLeadCategory" required>
                     <option value="">-- Select Legal Category Regulating Your Case --</option>
-                    <option value="Civil Litigation">Civil Litigation</option>
-                    <option value="Criminal Cases">Criminal Cases</option>
-                    <option value="Family Law">Family Law</option>
-                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                </select>
+                    </select>
             </div>
 
             <textarea id="globalLeadMessage" rows="6" placeholder="Provide accurate event descriptions, product names, diagnosis records, or critical date timelines..." required></textarea>
@@ -550,6 +529,7 @@
                 <div class="admin-nav">
                     <button class="active" id="tabLeadsBtn">View Leads</button>
                     <button id="tabCasesBtn">Manage Cases</button>
+                    <button id="tabCategoriesBtn">Categories</button>
                     <button id="tabSettingsBtn">Settings</button>
                     <button class="logout-btn" id="adminLogoutBtn">Logout</button>
                 </div>
@@ -565,12 +545,7 @@
                             <div style="flex: 1; min-width: 200px;">
                                 <select id="adminLeadFilter">
                                     <option value="All">All Categories</option>
-                                    <option value="Civil Litigation">Civil Litigation</option>
-                                    <option value="Criminal Cases">Criminal Cases</option>
-                                    <option value="Family Law">Family Law</option>
-                                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                                </select>
+                                    </select>
                             </div>
                             <button id="exportCsvBtn" class="btn btn-secondary" style="padding: 8px 15px;">Export to CSV</button>
                         </div>
@@ -601,30 +576,12 @@
                     <form class="admin-form" id="addCaseForm">
                         <input type="hidden" id="editCaseTargetId" value="">
                         <input type="text" id="newCaseTitle" placeholder="Case Title" required>
+                        <input type="url" id="newCaseImageUrl" placeholder="Case Image URL (Optional - e.g., https://...)">
                         <div style="width: 100%;">
                             <select id="newCaseCategory" required>
                                 <option value="">Select Category</option>
-                                <option value="Civil Litigation">Civil Litigation</option>
-                                <option value="Criminal Cases">Criminal Cases</option>
-                                <option value="Family Law">Family Law</option>
-                                <option value="Corporate & Business Law">Corporate & Business Law</option>
-                                <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                            </select>
+                                </select>
                         </div>
-                        
-                        <div class="image-upload-wrapper" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
-                            <div class="image-dropzone" id="imageDropzone">
-                                <span class="icon">📷</span>
-                                <span style="font-weight: 600; color: #475569; font-size: 0.95em;">Click or Drag Banner Image Here</span>
-                                <input type="file" id="newCaseImageFile" accept="image/*" style="display: none;">
-                                <input type="hidden" id="newCaseImageBase64" value="">
-                            </div>
-                            <div class="image-preview-container" id="imagePreviewContainer">
-                                <img id="newCaseImagePreview" src="" alt="Preview">
-                                <button type="button" class="remove-img-btn" id="removeUploadedImageBtn">Remove Image</button>
-                            </div>
-                        </div>
-
                         <textarea id="newCaseDesc" rows="4" placeholder="Case Description & Eligibility Requirements" required></textarea>
                         <button type="submit" id="adminFormSubmitBtn" class="btn">Add Case to Website</button>
                     </form>
@@ -637,6 +594,28 @@
                                     <th>Case Title</th>
                                     <th>Category</th>
                                     <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="categoriesSection" style="display: none;">
+                    <div class="dashboard-header-flex">
+                        <h3>Manage Case Categories</h3>
+                    </div>
+                    <form class="admin-form" id="addCategoryForm" style="display: flex; gap: 15px; align-items: center; max-width: 600px;">
+                        <input type="text" id="newCategoryName" placeholder="New Category Name (e.g., Medical Malpractice)" style="flex: 1; margin-bottom: 0;" required>
+                        <button type="submit" class="btn" style="white-space: nowrap;">Add Category</button>
+                    </form>
+
+                    <div class="table-responsive" style="max-width: 600px;">
+                        <table class="admin-table" id="adminCategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -706,59 +685,68 @@
             const initialHash = window.location.hash.replace('#', '') || 'home';
             if(initialHash.startsWith('case-details')) { navigateToPage('cases'); } else { navigateToPage(initialHash); }
 
-            // Convert Native Selects to Styled Premium Dropdowns
-            document.querySelectorAll('select').forEach(select => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'custom-select-container';
-                select.parentNode.insertBefore(wrapper, select);
-                wrapper.appendChild(select);
-                select.style.display = 'none'; // Keep hidden for FormData processing
+            // Custom Select implementation function (exposed to window for re-initialization by app.js)
+            window.initializeCustomSelects = function() {
+                // Clear existing wrappers to prevent nesting if called multiple times
+                document.querySelectorAll('.custom-select-container').forEach(container => {
+                    const select = container.querySelector('select');
+                    if (select) {
+                        container.parentNode.insertBefore(select, container);
+                        select.style.display = 'block';
+                    }
+                    container.remove();
+                });
 
-                const trigger = document.createElement('div');
-                trigger.className = 'custom-select-trigger';
-                trigger.innerHTML = `<span>${select.options[select.selectedIndex]?.text || 'Select'}</span><span class="arrow">▼</span>`;
-                wrapper.appendChild(trigger);
+                document.querySelectorAll('select').forEach(select => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'custom-select-container';
+                    select.parentNode.insertBefore(wrapper, select);
+                    wrapper.appendChild(select);
+                    select.style.display = 'none';
 
-                const optionsList = document.createElement('div');
-                optionsList.className = 'custom-select-options';
-                wrapper.appendChild(optionsList);
+                    const trigger = document.createElement('div');
+                    trigger.className = 'custom-select-trigger';
+                    trigger.innerHTML = `<span>${select.options[select.selectedIndex]?.text || 'Select'}</span><span>▼</span>`;
+                    wrapper.appendChild(trigger);
 
-                Array.from(select.options).forEach((option, index) => {
-                    if(option.value === "" && index === 0 && select.id !== 'adminLeadFilter' && select.id !== 'frontendFilterCases') return;
-                    const optDiv = document.createElement('div');
-                    optDiv.className = 'custom-option';
-                    optDiv.textContent = option.text;
-                    optDiv.dataset.value = option.value;
-                    if(select.value === option.value) optDiv.classList.add('selected');
-                    
-                    optDiv.addEventListener('click', (e) => {
+                    const optionsList = document.createElement('div');
+                    optionsList.className = 'custom-select-options';
+                    wrapper.appendChild(optionsList);
+
+                    Array.from(select.options).forEach((option, index) => {
+                        if(option.value === "" && index === 0) return;
+                        const optDiv = document.createElement('div');
+                        optDiv.className = 'custom-option';
+                        optDiv.textContent = option.text;
+                        optDiv.dataset.value = option.value;
+                        if(select.value === option.value) optDiv.classList.add('selected');
+                        
+                        optDiv.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            select.value = option.value;
+                            trigger.querySelector('span').textContent = option.text;
+                            optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                            optDiv.classList.add('selected');
+                            optionsList.classList.remove('open');
+                            select.dispatchEvent(new Event('change'));
+                        });
+                        optionsList.appendChild(optDiv);
+                    });
+
+                    trigger.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        select.value = option.value;
-                        trigger.querySelector('span').textContent = option.text;
-                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
-                        optDiv.classList.add('selected');
-                        wrapper.classList.remove('open-select');
-                        optionsList.classList.remove('open');
-                        select.dispatchEvent(new Event('change'));
+                        document.querySelectorAll('.custom-select-options').forEach(list => {
+                            if(list !== optionsList) list.classList.remove('open');
+                        });
+                        optionsList.classList.toggle('open');
                     });
-                    optionsList.appendChild(optDiv);
                 });
+            };
 
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    document.querySelectorAll('.custom-select-container').forEach(c => {
-                        if(c !== wrapper) {
-                            c.classList.remove('open-select');
-                            c.querySelector('.custom-select-options').classList.remove('open');
-                        }
-                    });
-                    wrapper.classList.toggle('open-select');
-                    optionsList.classList.toggle('open');
-                });
-            });
+            // Call it on initial load
+            window.initializeCustomSelects();
 
             document.addEventListener('click', () => {
-                document.querySelectorAll('.custom-select-container').forEach(c => c.classList.remove('open-select'));
                 document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
             });
 
@@ -775,74 +763,6 @@
                         const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
                         if(activeOpt) activeOpt.classList.add('selected');
                     }
-                }
-            };
-
-            // Direct Click and Drag-and-Drop File Upload Core Logic
-            const dropzone = document.getElementById('imageDropzone');
-            const fileInput = document.getElementById('newCaseImageFile');
-            const base64Input = document.getElementById('newCaseImageBase64');
-            const previewContainer = document.getElementById('imagePreviewContainer');
-            const previewImg = document.getElementById('newCaseImagePreview');
-            const removeBtn = document.getElementById('removeUploadedImageBtn');
-
-            if (dropzone && fileInput) {
-                dropzone.addEventListener('click', () => fileInput.click());
-                dropzone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropzone.style.borderColor = '#0d6efd';
-                    dropzone.style.background = '#f1f5f9';
-                });
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.style.borderColor = '#cbd5e1';
-                    dropzone.style.background = '#f8f9fa';
-                });
-                dropzone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropzone.style.borderColor = '#cbd5e1';
-                    dropzone.style.background = '#f8f9fa';
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        processImageFile(e.dataTransfer.files[0]);
-                    }
-                });
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        processImageFile(e.target.files[0]);
-                    }
-                });
-            }
-
-            if (removeBtn) {
-                removeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    window.syncImagePreview('');
-                });
-            }
-
-            function processImageFile(file) {
-                if (!file.type.startsWith('image/')) {
-                    window.showToast('Please upload a valid image file portfolio match', 'error');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    window.syncImagePreview(e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-
-            window.syncImagePreview = function(base64Str) {
-                if (base64Str) {
-                    base64Input.value = base64Str;
-                    previewImg.src = base64Str;
-                    previewContainer.style.display = 'block';
-                    dropzone.style.display = 'none';
-                } else {
-                    fileInput.value = '';
-                    base64Input.value = '';
-                    previewImg.src = '';
-                    previewContainer.style.display = 'none';
-                    dropzone.style.display = 'flex';
                 }
             };
 
@@ -920,25 +840,41 @@
             this.classList.add('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('leadsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
         });
         document.getElementById('tabCasesBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('casesSection').style.display = 'block';
             document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
+        });
+        document.getElementById('tabCategoriesBtn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('tabLeadsBtn').classList.remove('active');
+            document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('categoriesSection').style.display = 'block';
+            document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('casesSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabSettingsBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('settingsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
             document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
         });
     </script>
 
