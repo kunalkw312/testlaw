@@ -1,9 +1,8 @@
 // ==========================================
 // FIREBASE INTEGRATION & STATE MANAGEMENT
 // ==========================================
-import { db, auth } from './config.js';
+import { db } from './config.js';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // Mapping of structural categories to their corresponding asset filenames
 const CATEGORY_IMAGES = {
@@ -83,7 +82,6 @@ function renderSettings() {
     if (adminAddress) adminAddress.value = settingsData.address;
 }
 
-// Handles client-side live search and category filtering
 function renderPublicCases() {
     const gridContainer = document.getElementById('frontendCasesList');
     if (!gridContainer) return;
@@ -103,22 +101,26 @@ function renderPublicCases() {
         return;
     }
 
-    gridContainer.innerHTML = filtered.map(item => `
-        <div class="case-card" data-id="${item.id}">
-            <div class="case-img-wrap">
-                <img src="${getCaseImage(item.category)}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
-            </div>
-            <div class="case-card-body">
-                <span class="case-category">${item.category}</span>
-                <h3>${item.title}</h3>
-                <p>${item.description.substring(0, 140)}${item.description.length > 140 ? '...' : ''}</p>
-                <div class="case-btn-group">
-                    <button class="btn btn-view-detail" data-id="${item.id}">View Detail</button>
-                    <button class="btn btn-secondary btn-tile-contact" data-category="${item.category}">Contact Us</button>
+    gridContainer.innerHTML = filtered.map(item => {
+        const desc = item.description || "";
+        const truncatedDesc = desc.substring(0, 140) + (desc.length > 140 ? '...' : '');
+        return `
+            <div class="case-card" data-id="${item.id}">
+                <div class="case-img-wrap">
+                    <img src="${getCaseImage(item.category)}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
+                </div>
+                <div class="case-card-body">
+                    <span class="case-category">${item.category}</span>
+                    <h3>${item.title || "Untitled Case"}</h3>
+                    <p>${truncatedDesc}</p>
+                    <div class="case-btn-group">
+                        <button class="btn btn-view-detail" data-id="${item.id}">View Detail</button>
+                        <button class="btn btn-secondary btn-tile-contact" data-category="${item.category}">Contact Us</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     gridContainer.querySelectorAll('.btn-view-detail').forEach(btn => {
         btn.addEventListener('click', () => showCaseDetailPage(btn.getAttribute('data-id')));
@@ -144,8 +146,8 @@ function showCaseDetailPage(caseId) {
         </div>
         <div class="details-content">
             <span class="case-category" style="margin-bottom: 15px;">${caseObj.category}</span>
-            <h1>${caseObj.title}</h1>
-            <div class="full-description">${caseObj.description}</div>
+            <h1>${caseObj.title || "Untitled Case"}</h1>
+            <div class="full-description">${caseObj.description || "No description provided."}</div>
         </div>
     `;
 
@@ -181,11 +183,11 @@ function renderAdminDashboard() {
         } else {
             leadsTableBody.innerHTML = filteredLeads.map(l => `
                 <tr>
-                    <td><strong>${l.firstName} ${l.lastName}</strong></td>
-                    <td><a href="mailto:${l.email}">${l.email}</a></td>
-                    <td>${l.phone}</td>
-                    <td><span class="case-category" style="background:#475569">${l.category}</span></td>
-                    <td style="font-size:0.9em; max-width: 300px; white-space: pre-wrap;">${l.message}</td>
+                    <td><strong>${l.firstName || ""} ${l.lastName || ""}</strong></td>
+                    <td><a href="mailto:${l.email}">${l.email || ""}</a></td>
+                    <td>${l.phone || ""}</td>
+                    <td><span class="case-category" style="background:#475569">${l.category || ""}</span></td>
+                    <td style="font-size:0.9em; max-width: 300px; white-space: pre-wrap;">${l.message || ""}</td>
                 </tr>
             `).join('');
         }
@@ -198,8 +200,8 @@ function renderAdminDashboard() {
         } else {
             casesTableBody.innerHTML = casesData.map(c => `
                 <tr>
-                    <td><strong>${c.title}</strong></td>
-                    <td><span class="case-category" style="background:#0f172a">${c.category}</span></td>
+                    <td><strong>${c.title || "Untitled Case"}</strong></td>
+                    <td><span class="case-category" style="background:#0f172a">${c.category || ""}</span></td>
                     <td>
                         <div style="display:flex; gap: 8px;">
                             <button class="btn btn-warning btn-admin-edit" data-id="${c.id}" style="padding: 6px 12px; font-size: 0.85em;">Edit</button>
@@ -228,9 +230,9 @@ function loadCaseIntoAdminForm(caseId) {
     if (!targetCase) return;
 
     document.getElementById('editCaseTargetId').value = targetCase.id;
-    document.getElementById('newCaseTitle').value = targetCase.title;
-    document.getElementById('newCaseCategory').value = targetCase.category;
-    document.getElementById('newCaseDesc').value = targetCase.description;
+    document.getElementById('newCaseTitle').value = targetCase.title || "";
+    document.getElementById('newCaseCategory').value = targetCase.category || "";
+    document.getElementById('newCaseDesc').value = targetCase.description || "";
 
     // Sync Custom Select UI
     if(window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
@@ -280,19 +282,28 @@ function exportLeadsToCSV() {
         return;
     }
     
-    let csvContent = "data:text/csv;charset=utf-8,First Name,Last Name,Email,Phone,Category,Message\n";
+    let csvContent = "First Name,Last Name,Email,Phone,Category,Message\n";
     leadsData.forEach(l => {
+        let firstName = l.firstName ? l.firstName.replace(/"/g, '""') : "";
+        let lastName = l.lastName ? l.lastName.replace(/"/g, '""') : "";
+        let email = l.email ? l.email.replace(/"/g, '""') : "";
+        let phone = l.phone ? l.phone.replace(/"/g, '""') : "";
+        let category = l.category ? l.category.replace(/"/g, '""') : "";
         let cleanMsg = l.message ? l.message.replace(/"/g, '""') : "";
-        csvContent += `"${l.firstName}","${l.lastName}","${l.email}","${l.phone}","${l.category}","${cleanMsg}"\n`;
+        
+        csvContent += `"${firstName}","${lastName}","${email}","${phone}","${category}","${cleanMsg}"\n`;
     });
 
-    const encodedUri = encodeURI(csvContent);
+    // Use Blob strategy to handle special characters and linebreaks reliably
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", encodedUri);
+    downloadAnchor.setAttribute("href", url);
     downloadAnchor.setAttribute("download", `lawsuitfiles_leads_export_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
 }
 
 // ==========================================
@@ -300,19 +311,6 @@ function exportLeadsToCSV() {
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    // Monitor Authentication State changes dynamically
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('adminLoginBox').style.display = 'none';
-            document.getElementById('adminDashboardBox').style.display = 'flex';
-            renderAdminDashboard();
-        } else {
-            document.getElementById('adminDashboardBox').style.display = 'none';
-            document.getElementById('adminLoginBox').style.display = 'block';
-            if(document.getElementById('adminOverlay')) document.getElementById('adminOverlay').style.display = 'none';
-        }
-    });
 
     document.getElementById('frontendSearchCases').addEventListener('input', renderPublicCases);
     document.getElementById('frontendFilterCases').addEventListener('change', renderPublicCases);
@@ -356,37 +354,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Admin Security Check (Securely handles verification via Firebase Auth)
-    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+    // 2. Admin Security Check
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value.trim();
-        const submitBtn = this.querySelector('button[type="submit"]');
 
-        if(submitBtn) submitBtn.disabled = true;
-
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
+        if (email === "admin@gmail.com" && password === "admin1234") {
+            document.getElementById('adminLoginBox').style.display = 'none';
+            document.getElementById('adminDashboardBox').style.display = 'flex';
             window.showToast("Authentication confirmed. Access granted.");
-        } catch (error) {
-            console.error("Authentication Error:", error);
+            renderAdminDashboard();
+        } else {
             window.showToast("Invalid clearance credentials.", "error");
-        } finally {
-            if(submitBtn) submitBtn.disabled = false;
         }
     });
 
     // 3. Admin Logout
-    document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
-        try {
-            await signOut(auth);
-            document.getElementById('adminLoginForm').reset();
-            clearAdminCaseFormState();
-            window.showToast("Secure session terminated.");
-        } catch (error) {
-            console.error("Sign Out Error:", error);
-            window.showToast("Failed to safely terminate session.", "error");
-        }
+    document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+        document.getElementById('adminLoginForm').reset();
+        clearAdminCaseFormState();
+        document.getElementById('adminDashboardBox').style.display = 'none';
+        document.getElementById('adminLoginBox').style.display = 'block';
+        document.getElementById('adminOverlay').style.display = 'none';
+        window.showToast("Secure session terminated.");
     });
 
     // 4. Submit Admin Case (Create/Update via Firebase)
