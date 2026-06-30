@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawsuitFiles - Consumer Rights & Legal Justice Portal</title>
+    <style>
+        /* ================= GENERAL ================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { background: #ffffff; color: #333; line-height: 1.6; }
+
+        /* ================= SPA PAGE MANAGEMENT ================= */
+        .page-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+            min-height: 75vh;
+        }
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================= HEADER & NAVIGATION ================= */
+        header {
+            position: sticky; top: 0; z-index: 1000; background: #fff;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 8%; box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+        .logo { display: flex; align-items: center; cursor: pointer; }
+        .logo img { height: 45px; margin-right: 12px; vertical-align: middle; }
+        .logo span { font-weight: 700; font-size: 22px; color: #0a1128; letter-spacing: -0.5px; }
+        
+        nav { display: flex; gap: 30px; flex-wrap: wrap; }
+        nav a { text-decoration: none; color: #4a5568; font-weight: 600; font-size: 1.05em; transition: color 0.2s; position: relative; padding: 5px 0; }
+        nav a:hover, nav a.active-nav { color: #0d6efd; }
+        nav a.active-nav::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #0d6efd;
+        }
+        
+        .header-actions { display: flex; gap: 10px; }
+        
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 6px;
+            background: #0d6efd; color: white; cursor: pointer;
+            font-size: 1em; font-weight: 600; transition: all 0.3s;
+            text-align: center; display: inline-block;
+        }
+        .btn:hover { background: #0b5ed7; transform: translateY(-1px); }
+        .btn-secondary { background: #f8f9fa; color: #333; border: 1px solid #ddd; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #bd2130; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+
+        /* ================= HERO SECTIONS ================= */
+        .hero { display: flex; align-items: center; justify-content: space-between; padding: 80px 8%; gap: 60px; background: #fff; }
+        .hero-text { flex: 1.2; }
+        .hero-text h1 { font-size: 52px; margin-bottom: 24px; color: #0a1128; line-height: 1.15; font-weight: 800; }
+        .hero-text p { line-height: 1.8; margin-bottom: 30px; color: #4a5568; font-size: 1.2em; }
+        .hero-image { flex: 0.8; }
+        .hero-image img { width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .hero-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ================= INFO GRIDS & CARDS ================= */
+        .section-header { text-align: center; max-width: 800px; margin: 0 auto 50px auto; padding: 0 20px; }
+        .section-header h2 { font-size: 2.5em; color: #0a1128; margin-bottom: 15px; font-weight: 700; }
+        .section-header p { font-size: 1.15em; color: #64748b; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; padding: 20px 8% 60px 8%; background: #f8f9fa; }
+        .info-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 35px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: all 0.3s; }
+        .info-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .info-card h3 { font-size: 1.4em; color: #0a1128; margin-bottom: 15px; }
+        .info-card p { color: #4a5568; font-size: 1em; line-height: 1.6; }
+
+        /* ================= CASES VIEW STYLING ================= */
+        .cases-section { padding: 60px 8%; background: #f8f9fa; }
+        .cases-controls { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; }
+        .cases-controls input { padding: 14px 20px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1em; width: 300px; background: #fff; outline: none; flex: 1; max-width: 400px; }
+        .cases-controls input:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.15); }
+        
+        .cases-grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        @media (min-width: 768px) { .cases-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .cases-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .case-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.3s, box-shadow 0.3s; }
+        .case-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .case-img-wrap { width: 100%; height: 200px; background: #e2e8f0; overflow: hidden; position: relative; }
+        .case-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .case-card-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+        .case-category { font-size: 0.75em; color: #fff; background: #0d6efd; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; align-self: flex-start; }
+        .case-card h3 { margin-bottom: 12px; color: #0a1128; font-size: 1.3em; line-height: 1.4; }
+        .case-card p { font-size: 0.95em; color: #4a5568; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; }
+        .case-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+
+        /* ================= SINGLE CASE DETAIL LAYOUT ================= */
+        .details-wrapper { padding: 60px 8%; max-width: 1100px; margin: 0 auto; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: #0d6efd; text-decoration: none; font-weight: 600; margin-bottom: 25px; cursor: pointer; }
+        .details-hero { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 50px; }
+        .details-banner { width: 100%; height: 380px; background: #f1f5f9; }
+        .details-banner img { width: 100%; height: 100%; object-fit: cover; }
+        .details-content { padding: 40px; }
+        .details-content h1 { font-size: 2.3em; color: #0a1128; margin: 15px 0; }
+        .details-content .full-description { font-size: 1.1em; color: #334155; line-height: 1.8; white-space: pre-line; }
+
+        /* ================= FAQ & TIMELINE ================= */
+        .faq-section { padding: 80px 8%; background: #fff; }
+        .faq-grid { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .faq-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 25px; background: #f8f9fa; }
+        .faq-item h3 { font-size: 1.2em; color: #0a1128; margin-bottom: 10px; }
+        
+        .timeline { max-width: 800px; margin: 40px auto; position: relative; padding-left: 30px; border-left: 2px solid #e2e8f0; padding-right: 20px;}
+        .timeline-item { position: relative; margin-bottom: 40px; }
+        .timeline-item::before { content: ''; position: absolute; left: -36px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #0d6efd; border: 2px solid #fff; }
+        .timeline-year { font-weight: 700; color: #0d6efd; font-size: 1.1em; margin-bottom: 5px; }
+
+        /* ================= PROCESS STEPS ================= */
+        .process-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; padding: 40px 8%; background: #fff; }
+        .process-step { text-align: center; padding: 20px; position: relative; }
+        .step-number { width: 50px; height: 50px; line-height: 50px; background: #0a1128; color: #fff; border-radius: 50%; display: inline-block; font-weight: 700; font-size: 1.2em; margin-bottom: 15px; }
+        .process-step h4 { font-size: 1.15em; color: #0a1128; margin-bottom: 10px; }
+
+        /* ================= FORM / CONTACT ================= */
+        .form-wrapper { padding: 60px 8%; background: #f8f9fa; }
+        form.contact-form { max-width: 900px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        form.contact-form input, form.contact-form textarea { width: 100%; padding: 14px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.95em; outline: none; background: #f8f9fa; }
+        form.contact-form input:focus, form.contact-form textarea:focus { background: #fff; border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+        form.contact-form textarea { grid-column: span 2; resize: vertical; min-height: 140px; }
+        .full-width { grid-column: span 2; width: 100%; }
+        form.contact-form label.checkbox-label { grid-column: span 2; font-size: 0.9em; color: #4a5568; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 5px 0; }
+        form.contact-form label.checkbox-label input { width: auto; margin-top: 5px; cursor: pointer; }
+        form.contact-form .btn { grid-column: span 2; padding: 16px; font-size: 1.1em; }
+
+        /* ================= FOOTER ================= */
+        footer { background: #0a1128; color: #cbd5e1; padding: 70px 8% 40px 8%; position: relative; }
+        .footer-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+        .footer-logo { display: flex; align-items: center; gap: 10px; color: #ffffff; font-size: 1.3em; margin-bottom: 20px; font-weight: 700; }
+        .footer-logo img { height: 35px; width: auto; }
+        .footer-container h3 { margin-bottom: 20px; color: #ffffff; font-size: 1.1em; letter-spacing: 0.5px; text-transform: uppercase; }
+        .footer-container ul { list-style: none; }
+        .footer-container ul li { margin-bottom: 12px; }
+        .footer-container ul li a { color: #94a3b8; text-decoration: none; transition: 0.2s; }
+        .footer-container ul li a:hover { color: #ffffff; }
+        .footer-bottom { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #1e293b; font-size: 0.85em; color: #64748b; }
+        .admin-trigger { position: absolute; bottom: 15px; right: 20px; background: transparent; border: none; color: #334155; font-size: 0.8em; cursor: pointer; transition: color 0.3s; }
+        .admin-trigger:hover { color: #94a3b8; }
+
+        /* ================= ADMIN OVERLAY & PANELS ================= */
+        #adminOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 17, 40, 0.85); backdrop-filter: blur(5px); z-index: 2000; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        
+        .login-box { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .login-box h2 { font-size: 1.8em; margin-bottom: 8px; color: #0a1128; font-weight: 700; }
+        .login-box p { margin-bottom: 24px; color: #64748b; font-size: 0.95em; }
+        .login-box input { width: 100%; padding: 14px; margin: 8px 0 16px 0; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8f9fa; font-size: 0.95em; outline: none; transition: all 0.3s; }
+        .login-box input:focus { background: #fff; border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.15); }
+        .login-box button[type="submit"] { width: 100%; padding: 14px; background: #0d6efd; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: 600; margin-top: 10px; transition: background 0.2s; }
+        .login-box button[type="submit"]:hover { background: #0b5ed7; }
+        
+        .close-login-btn-bottom { margin-top: 20px; width: 100%; padding: 12px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 0.95em; cursor: pointer; transition: all 0.2s; }
+        .close-login-btn-bottom:hover { background: #e2e8f0; color: #0a1128; }
+
+        .admin-dashboard { display: none; background: #f8f9fa; width: 100%; max-width: 1100px; height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .admin-header { background: #0a1128; color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .admin-header h2 { font-size: 1.5em; margin: 0; }
+        .admin-nav { display: flex; gap: 15px; flex-wrap: wrap; }
+        .admin-nav button { background: none; border: none; color: #94a3b8; font-size: 1em; font-weight: 600; cursor: pointer; padding-bottom: 6px; transition: color 0.2s; }
+        .admin-nav button.active { color: #fff; border-bottom: 2px solid #0d6efd; }
+        .admin-nav button.logout-btn { color: #f43f5e; }
+        
+        .admin-body { padding: 30px; overflow-y: auto; flex: 1; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .admin-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .admin-table th, .admin-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .admin-table th { background: #f8f9fa; font-weight: 700; color: #334155; }
+        
+        .dashboard-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        
+        .admin-form { display: grid; grid-template-columns: 1fr; gap: 16px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 30px; }
+        .admin-form input, .admin-form textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; outline: none; background: #f8f9fa; }
+        
+        .admin-dashboard .close-dashboard-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 1.3em; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* ================= CUSTOM UI SYSTEM (SELECTS, TOASTS, MODALS) ================= */
+        
+        /* Custom Dropdown Styling */
+        .custom-select-container { position: relative; width: 100%; }
+        .custom-select-trigger { padding: 14px 20px; background: #f8f9fa; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; color: #4a5568; transition: all 0.3s; }
+        .custom-select-trigger:hover { border-color: #0d6efd; background: #fff; }
+        .custom-select-options { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; display: none; max-height: 250px; overflow-y: auto; }
+        .custom-select-options.open { display: block; animation: slideDown 0.2s ease; }
+        .custom-option { padding: 12px 20px; cursor: pointer; transition: background 0.2s; font-size: 0.95em; color: #334155; }
+        .custom-option:hover { background: #f1f5f9; color: #0d6efd; }
+        .custom-option.selected { background: #e0f2fe; font-weight: 600; color: #0369a1; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .custom-toast { background: #0a1128; color: #fff; padding: 16px 24px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 0.95em; display: flex; align-items: center; justify-content: space-between; min-width: 300px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-left: 4px solid #0d6efd; }
+        .custom-toast.show { transform: translateX(0); }
+        .custom-toast.error { border-left-color: #dc3545; }
+        .custom-toast.success { border-left-color: #198754; }
+        .toast-close { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.2em; margin-left: 15px;}
+        .toast-close:hover { color: #fff; }
+
+        /* Custom Confirm Modal */
+        #custom-confirm-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 17, 40, 0.7); backdrop-filter: blur(4px); z-index: 10000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        #custom-confirm-overlay.show { opacity: 1; }
+        .custom-confirm-box { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 400px; width: 90%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #custom-confirm-overlay.show .custom-confirm-box { transform: scale(1); }
+        .custom-confirm-title { font-size: 1.4em; color: #0a1128; margin-bottom: 10px; font-weight: 700; }
+        .custom-confirm-message { color: #64748b; font-size: 1em; margin-bottom: 25px; line-height: 1.5; }
+        .custom-confirm-actions { display: flex; gap: 15px; justify-content: center; }
+        .custom-confirm-actions button { flex: 1; }
+
+        /* ================= MOBILE RESPONSIVENESS ================= */
+        @media (max-width: 768px) {
+            header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
+            nav { justify-content: center; width: 100%; gap: 15px; }
+            
+            /* Hidden on mobile explicitly to address your UI request */
+            .header-actions { display: none; }
+            
+            .hero { flex-direction: column; text-align: center; padding: 40px 20px; gap: 30px; }
+            .hero-text h1 { font-size: 36px; }
+            .hero-text p { font-size: 1.05em; }
+            .hero-buttons { justify-content: center; }
+            .hero-buttons .btn { width: 100%; margin: 5px 0; }
+            
+            .details-wrapper { padding: 30px 20px; }
+            .details-banner { height: 220px; }
+            .details-content { padding: 25px; }
+            .details-content h1 { font-size: 1.8em; }
+            
+            .section-header h2 { font-size: 2em; }
+            .cases-section, .faq-section, .form-wrapper { padding: 40px 20px; }
+            
+            .cases-controls input { width: 100%; max-width: none; }
+            
+            form.contact-form { grid-template-columns: 1fr; padding: 25px; }
+            form.contact-form textarea, .full-width, form.contact-form label.checkbox-label, form.contact-form .btn { grid-column: span 1; }
+            
+            #adminOverlay { padding: 10px; }
+            .login-box { padding: 30px 20px; }
+            .admin-dashboard { height: 95vh; border-radius: 8px; }
+            .admin-header { flex-direction: column; align-items: flex-start; padding: 15px; }
+            .admin-header .close-dashboard-btn { position: absolute; top: 15px; right: 15px; }
+            .admin-body { padding: 15px; }
+            
+            .timeline { padding-left: 20px; }
+            .timeline-item::before { left: -26px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="navigateToPage('home')">
+            <img src="assets/logo.png" alt="LawsuitFiles Logo" onerror="this.src='https://via.placeholder.com/45x45'">
+            <span>LawsuitFiles</span>
+        </div>
+        <nav id="mainNav">
+            <a href="#home" onclick="navigateToPage('home'); return false;" class="active-nav">Home</a>
+            <a href="#cases" onclick="navigateToPage('cases'); return false;">Cases</a>
+            <a href="#about" onclick="navigateToPage('about'); return false;">About</a>
+            <a href="#connect" onclick="navigateToPage('connect'); return false;">Connect</a>
+        </nav>
+        <div class="header-actions">
+            <button class="btn" onclick="navigateToPage('connect')">Get Started</button>
+        </div>
+    </header>
+
+    <main id="homePage" class="page-content active">
+        <section class="hero">
+            <div class="hero-text">
+                <h1>Protecting Consumer Rights & Securing Judicial Justice</h1>
+                <p>LawsuitFiles helps citizens track ongoing litigation, corporate negligence investigations, and mass civil claims. Find out within minutes if you are eligible to claim compensation.</p>
+                <div class="hero-buttons">
+                    <button class="btn" onclick="navigateToPage('connect')">Free Case Review</button>
+                    <button class="btn btn-secondary" onclick="navigateToPage('cases')">Explore Active Investigations</button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/image.png" alt="Legal Shield and Scales" onerror="this.src='https://via.placeholder.com/600x400'">
+            </div>
+        </section>
+
+        <section class="section-header" style="margin-top: 40px; margin-bottom: 20px;">
+            <h2>Why Transparency Matters in Legal Claims</h2>
+            <p>Every year, millions of consumers are impacted by corporate overreach, defective engineering, and environmental toxins without knowing their legal avenues. We bridge that divide.</p>
+        </section>
+
+        <section class="info-grid">
+            <div class="info-card">
+                <h3>Mass Tort Investigations</h3>
+                <p>We aggregate and breakdown complex multi-district litigations (MDLs) so everyday individuals can cross-examine product recalls, medical gear defects, and hazardous environmental contamination parameters seamlessly.</p>
+            </div>
+            <div class="info-card">
+                <h3>Vetted Attorney Connections</h3>
+                <p>Our infrastructure matches validated case profiles with leading litigation specialists across civil law parameters, ensuring requests go to teams equipped with relevant litigation resources.</p>
+            </div>
+            <div class="info-card">
+                <h3>No Risk Assessment</h3>
+                <p>All evaluation pipelines hosted via our portal run under strict contingency guidelines. Case assessments and initial consultations carry zero upfront retainers or financial risk factors.</p>
+            </div>
+        </section>
+
+        <section class="hero" style="background: #f8f9fa; padding: 60px 8%;">
+            <div class="hero-image">
+                <img src="assets/image1.png" alt="Lawyers meeting" onerror="this.src='https://via.placeholder.com/600x400'">
+            </div>
+            <div class="hero-text">
+                <h2>Accountability Across Modern Industries</h2>
+                <p style="font-size: 1.05em;">From pharmaceutical errors to data security breaches exposing private identification markers, standard corporate frameworks often out-budget direct independent complaints. LawsuitFiles provides individual plaintiffs structural safety numbers via clear consolidated reporting protocols.</p>
+                <button class="btn" onclick="navigateToPage('about')">Learn More About Us</button>
+            </div>
+        </section>
+    </main>
+
+    <main id="casesPage" class="page-content">
+        <section class="cases-section">
+            <div class="section-header">
+                <h2>Active Litigation Directory</h2>
+                <p>Filter or search through actively tracked claims portfolios, consumer product failures, and class action status indicators to pinpoint matches.</p>
+            </div>
+            
+            <div class="cases-controls">
+                <input type="text" id="frontendSearchCases" placeholder="Search parameters (e.g., Pharma, Defect)...">
+                <select id="frontendFilterCases">
+                    <option value="All">All Categories</option>
+                    <option value="Civil Litigation">Civil Litigation</option>
+                    <option value="Criminal Cases">Criminal Cases</option>
+                    <option value="Family Law">Family Law</option>
+                    <option value="Corporate & Business Law">Corporate & Business Law</option>
+                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
+                </select>
+            </div>
+
+            <div class="cases-grid" id="frontendCasesList"></div>
+        </section>
+
+        <section class="faq-section">
+            <div class="section-header">
+                <h2>Litigation Directory FAQ</h2>
+                <p>Understanding basic legal framework expectations before submitting filing materials.</p>
+            </div>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3>What is the difference between an individual suit and Class Action/MDL?</h3>
+                    <p>Class actions merge multiple matching claims into one standardized lawsuit handled by a lead plaintiff representative, whereas Multi-District Litigation (MDL) consolidates individual lawsuits across multiple districts temporarily for faster evidence discovery while preserving distinct separate verdicts.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How long do discovery phases typically take?</h3>
+                    <p>Complex products or medical claims can reside in discovery phases from 12 to 36 months depending upon federal diagnostic reporting speeds, corporate data processing transparency, and overall liability criteria density.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Is there a fee to remain listed within active tracking channels?</h3>
+                    <p>No. Monitoring systemic investigation updates and logging potential interest attributes across our portal involves zero financial overhead requirements.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="caseDetailsPage" class="page-content">
+        <div class="details-wrapper">
+            <a class="back-link" onclick="navigateToPage('cases')">← Back to Cases Directory</a>
+            
+            <div class="details-hero" id="dynamicCaseDetailContainer">
+                </div>
+        </div>
+    </main>
+
+    <main id="aboutPage" class="page-content">
+        <section class="hero">
+            <div class="hero-text">
+                <h1>Our Mission for Equal Representation</h1>
+                <p>Founded with the core tenet that legal information shouldn't stay locked behind astronomical corporate retainer systems, LawsuitFiles establishes structured data tracking maps empowering individuals to challenge complex enterprise faults securely.</p>
+            </div>
+            <div class="hero-image">
+                <img src="assets/image2.png" alt="Gavel on desk" onerror="this.src='https://via.placeholder.com/600x400'">
+            </div>
+        </section>
+
+        <section class="section-header" style="margin-top: 40px; margin-bottom: 10px;">
+            <h2>Portal Milestones & Evolution Framework</h2>
+            <p>How we have transitioned consumer intake systems toward clear digital compliance operations over the years.</p>
+        </section>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-year">2020 - Initiative Blueprint</div>
+                <p>Launched foundational case alert system mapping consumer recall listings into straightforward interactive search databases across automotive product defect arrays.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-year">2023 - System Scaling</div>
+                <p>Integrated mass consumer tort tracking vectors encompassing prescription drug warnings and environmental corporate infrastructure pipeline leakage portfolios.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-year">2026 - Modernized Infrastructure</div>
+                <p>Deployed secure real-time lead ingestion frameworks that route validated evaluation requests directly to qualified legal professionals instantly, dropping standard administrative delay matrices completely.</p>
+            </div>
+        </div>
+
+        <section class="info-grid">
+            <div class="info-card" style="text-align: center;">
+                <h3 style="font-size: 2.2em; color:#0d6efd;">100%</h3>
+                <p>Contingency Focus Standards</p>
+            </div>
+            <div class="info-card" style="text-align: center;">
+                <h3 style="font-size: 2.2em; color:#0d6efd;">24/7</h3>
+                <p>Secure Submission Intake Capabilities</p>
+            </div>
+            <div class="info-card" style="text-align: center;">
+                <h3 style="font-size: 2.2em; color:#0d6efd;">Thousands</h3>
+                <p>Of Case Requests Evaluated Annually</p>
+            </div>
+        </section>
+    </main>
+
+    <main id="connectPage" class="page-content">
+        <section class="section-header" style="margin-top: 50px; margin-bottom: 20px;">
+            <h2>How It Works</h2>
+            <p>Before submitting the secure intake form below, review our standard evaluation pipeline process.</p>
+        </section>
+
+        <div class="process-container">
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <h4>Complete Request</h4>
+                <p>Provide contact variables and explicit product/accident details safely via the form below.</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <h4>Data Filtering</h4>
+                <p>System models categorize claim types across current tracking lists.</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <h4>Legal Contact</h4>
+                <p>Vetted partner attorney networks follow up directly if parameters show viability.</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="form-wrapper" id="globalContactSection">
+        <div class="section-header" style="margin-bottom: 30px;">
+            <h2>Initiate Your Free Case Evaluation</h2>
+            <p>Submit your event variables beneath this tracking window to establish preliminary eligibility status indices. Legal professionals require clear primary fields to verify standard statutory limitations frameworks accurately.</p>
+        </div>
+        <form class="contact-form" id="globalContactForm">
+            <input type="text" id="globalLeadFirstName" placeholder="First Name" required>
+            <input type="text" id="globalLeadLastName" placeholder="Last Name" required>
+            <input type="email" id="globalLeadEmail" placeholder="Email Address" required>
+            <input type="tel" id="globalLeadPhone" placeholder="Phone / Mobile Contact Number" required>
+            
+            <div class="full-width">
+                <select id="globalLeadCategory" required>
+                    <option value="">-- Select Legal Category Regulating Your Case --</option>
+                    <option value="Civil Litigation">Civil Litigation</option>
+                    <option value="Criminal Cases">Criminal Cases</option>
+                    <option value="Family Law">Family Law</option>
+                    <option value="Corporate & Business Law">Corporate & Business Law</option>
+                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
+                </select>
+            </div>
+
+            <textarea id="globalLeadMessage" rows="6" placeholder="Provide accurate event descriptions, product names, diagnosis records, or critical date timelines..." required></textarea>
+            
+            <label class="checkbox-label">
+                <input type="checkbox" required>
+                I authorize vetted network legal partners to call or text me using electronic communication tools regarding this review entry.
+            </label>
+            <button class="btn" type="submit">Submit Secure Consultation Request</button>
+        </form>
+    </div>
+
+    <footer>
+        <div class="footer-container">
+            <div>
+                <h2 class="footer-logo">
+                    <img src="assets/whiteimage.png" alt="" onerror="this.style.display='none'">
+                    LawsuitFiles
+                </h2>
+                <p>Professional information logging and legal communication matching utilities serving consumers nationwide.</p>
+            </div>
+            <div>
+                <h3>EXPLORE</h3>
+                <ul>
+                    <li><a href="#home" onclick="navigateToPage('home'); return false;">Home</a></li>
+                    <li><a href="#cases" onclick="navigateToPage('cases'); return false;">Active Cases</a></li>
+                    <li><a href="#about" onclick="navigateToPage('about'); return false;">About Platform</a></li>
+                    <li><a href="#connect" onclick="navigateToPage('connect'); return false;">Connect Hub</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>PRACTICE CHANNELS</h3>
+                <ul>
+                    <li><a href="#cases" onclick="navigateToPage('cases'); return false;">Civil Litigation</a></li>
+                    <li><a href="#cases" onclick="navigateToPage('cases'); return false;">Consumer Defect Torts</a></li>
+                    <li><a href="#cases" onclick="navigateToPage('cases'); return false;">Enterprise Liability</a></li>
+                    <li><a href="#cases" onclick="navigateToPage('cases'); return false;">Personal Injury Claims</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3>CONTACT DETAILS</h3>
+                <p id="footerTel">Tel Support: +1 (555) 000-0000</p>
+                <p id="footerEmail">✉ Queries: legal@lawsuitfiles.com</p>
+                <p id="footerAddress">📍 Intake: New York, United States</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            © 2026 lawsuitfiles.com | All informational updates strictly managed under consumer privacy laws.
+        </div>
+        
+        <button id="openAdminModalBtn" class="admin-trigger">Admin Panel</button>
+    </footer>
+
+    <div id="adminOverlay">
+        
+        <div class="login-box" id="adminLoginBox">
+            <h2>Admin Login</h2>
+            <p>Sign in to manage active website databases</p>
+            <form id="adminLoginForm">
+                <input type="email" id="adminEmail" placeholder="Email Address (admin@gmail.com)" required>
+                <input type="password" id="adminPassword" placeholder="Security Password (admin1234)" required>
+                <button type="submit">Login Securely</button>
+            </form>
+            <button class="close-login-btn-bottom" id="closeLoginBtn">Cancel / Close</button>
+        </div>
+
+        <div class="admin-dashboard" id="adminDashboardBox" style="display: none;">
+            <header class="admin-header">
+                <h2>⚖️ Admin Dashboard</h2>
+                <div class="admin-nav">
+                    <button class="active" id="tabLeadsBtn">View Leads</button>
+                    <button id="tabCasesBtn">Manage Cases</button>
+                    <button id="tabSettingsBtn">Settings</button>
+                    <button class="logout-btn" id="adminLogoutBtn">Logout</button>
+                </div>
+                <button class="close-dashboard-btn" id="closeDashboardBtn">&times;</button>
+            </header>
+
+            <main class="admin-body">
+                
+                <div id="leadsSection">
+                    <div class="dashboard-header-flex">
+                        <h3>Submitted Form Leads</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <select id="adminLeadFilter">
+                                    <option value="All">All Categories</option>
+                                    <option value="Civil Litigation">Civil Litigation</option>
+                                    <option value="Criminal Cases">Criminal Cases</option>
+                                    <option value="Family Law">Family Law</option>
+                                    <option value="Corporate & Business Law">Corporate & Business Law</option>
+                                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
+                                </select>
+                            </div>
+                            <button id="exportCsvBtn" class="btn btn-secondary" style="padding: 8px 15px;">Export to CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="adminLeadsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Category</th>
+                                    <th>Message Details</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="casesSection" style="display: none;">
+                    <div class="dashboard-header-flex">
+                        <h3 id="adminFormHeadline">Add New Case Investigation</h3>
+                        <button id="cancelEditCaseBtn" class="btn btn-secondary" style="display: none; padding: 6px 12px; font-size: 0.9em;">Cancel Editing Mode</button>
+                    </div>
+                    
+                    <form class="admin-form" id="addCaseForm">
+                        <input type="hidden" id="editCaseTargetId" value="">
+                        <input type="text" id="newCaseTitle" placeholder="Case Title" required>
+                        <div style="width: 100%;">
+                            <select id="newCaseCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="Civil Litigation">Civil Litigation</option>
+                                <option value="Criminal Cases">Criminal Cases</option>
+                                <option value="Family Law">Family Law</option>
+                                <option value="Corporate & Business Law">Corporate & Business Law</option>
+                                <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
+                            </select>
+                        </div>
+                        <textarea id="newCaseDesc" rows="4" placeholder="Case Description & Eligibility Requirements" required></textarea>
+                        <button type="submit" id="adminFormSubmitBtn" class="btn">Add Case to Website</button>
+                    </form>
+
+                    <h3>Existing Cases Management</h3>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="adminCasesTable">
+                            <thead>
+                                <tr>
+                                    <th>Case Title</th>
+                                    <th>Category</th>
+                                    <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="settingsSection" style="display: none;">
+                    <div class="dashboard-header-flex">
+                        <h3>Update Platform Contact Details</h3>
+                    </div>
+                    <form class="admin-form" id="updateSettingsForm">
+                        <label for="settingTel" style="font-weight: 600; color: #334155;">Telephone Support Number</label>
+                        <input type="text" id="settingTel" placeholder="e.g. +1 (555) 000-0000" required>
+                        
+                        <label for="settingEmail" style="font-weight: 600; color: #334155; margin-top: 10px;">Primary Support Email</label>
+                        <input type="email" id="settingEmail" placeholder="e.g. legal@lawsuitfiles.com" required>
+                        
+                        <label for="settingAddress" style="font-weight: 600; color: #334155; margin-top: 10px;">Physical Intake Address</label>
+                        <input type="text" id="settingAddress" placeholder="e.g. New York, United States" required>
+                        
+                        <button type="submit" class="btn" style="margin-top: 15px;">Save Updates Globally</button>
+                    </form>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function navigateToPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('#mainNav a').forEach(link => link.classList.remove('active-nav'));
+
+            const targetedPageMap = {
+                'home': 'homePage',
+                'cases': 'casesPage',
+                'about': 'aboutPage',
+                'connect': 'connectPage',
+                'case-details': 'caseDetailsPage'
+            };
+
+            const actualElementId = targetedPageMap[pageId];
+            if (actualElementId && document.getElementById(actualElementId)) {
+                document.getElementById(actualElementId).classList.add('active');
+                
+                const activeNavLink = Array.from(document.querySelectorAll('#mainNav a'))
+                    .find(link => link.getAttribute('href') === `#${pageId}`);
+                if (activeNavLink) activeNavLink.classList.add('active-nav');
+                
+                window.scrollTo(0, 0);
+                history.pushState(null, null, `#${pageId}`);
+            }
+        }
+
+        window.addEventListener('popstate', () => {
+            const currentHash = window.location.hash.replace('#', '') || 'home';
+            if(currentHash.startsWith('case-details')) {
+                navigateToPage('cases');
+            } else {
+                navigateToPage(currentHash);
+            }
+        });
+
+        // Initialize Custom Selects, Toasts & Modals
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialHash = window.location.hash.replace('#', '') || 'home';
+            if(initialHash.startsWith('case-details')) { navigateToPage('cases'); } else { navigateToPage(initialHash); }
+
+            // Convert Native Selects to Styled Custom Dropdowns
+            document.querySelectorAll('select').forEach(select => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-select-container';
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(select);
+                select.style.display = 'none'; // Keep hidden for FormData processing
+
+                const trigger = document.createElement('div');
+                trigger.className = 'custom-select-trigger';
+                trigger.innerHTML = `<span>${select.options[select.selectedIndex]?.text || 'Select'}</span><span>▼</span>`;
+                wrapper.appendChild(trigger);
+
+                const optionsList = document.createElement('div');
+                optionsList.className = 'custom-select-options';
+                wrapper.appendChild(optionsList);
+
+                Array.from(select.options).forEach((option, index) => {
+                    if(option.value === "" && index === 0) return;
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'custom-option';
+                    optDiv.textContent = option.text;
+                    optDiv.dataset.value = option.value;
+                    if(select.value === option.value) optDiv.classList.add('selected');
+                    
+                    optDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        select.value = option.value;
+                        trigger.querySelector('span').textContent = option.text;
+                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                        optDiv.classList.add('selected');
+                        optionsList.classList.remove('open');
+                        select.dispatchEvent(new Event('change'));
+                    });
+                    optionsList.appendChild(optDiv);
+                });
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-select-options').forEach(list => {
+                        if(list !== optionsList) list.classList.remove('open');
+                    });
+                    optionsList.classList.toggle('open');
+                });
+            });
+
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
+            });
+
+            // Expose syncing tool so JS can artificially update dropdown text later
+            window.syncCustomSelect = function(selectId) {
+                const select = document.getElementById(selectId);
+                if(select && select.parentNode.classList.contains('custom-select-container')) {
+                    const triggerSpan = select.parentNode.querySelector('.custom-select-trigger span');
+                    const selectedOption = select.options[select.selectedIndex];
+                    if(triggerSpan && selectedOption) {
+                        triggerSpan.textContent = selectedOption.text;
+                        const optionsList = select.parentNode.querySelector('.custom-select-options');
+                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                        const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
+                        if(activeOpt) activeOpt.classList.add('selected');
+                    }
+                }
+            };
+
+            // Custom Toast Overrides
+            window.showToast = function(message, type = 'success') {
+                let container = document.getElementById('toast-container');
+                if(!container) {
+                    container = document.createElement('div');
+                    container.id = 'toast-container';
+                    document.body.appendChild(container);
+                }
+                
+                if(message.toLowerCase().includes('invalid') || message.toLowerCase().includes('refused') || message.toLowerCase().includes('error')) type = 'error';
+
+                const toast = document.createElement('div');
+                toast.className = `custom-toast ${type}`;
+                toast.innerHTML = `<span>${message}</span><button class="toast-close">&times;</button>`;
+                container.appendChild(toast);
+                
+                void toast.offsetWidth;
+                toast.classList.add('show');
+
+                const removeToast = () => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                };
+
+                toast.querySelector('.toast-close').addEventListener('click', removeToast);
+                setTimeout(removeToast, 4000);
+            };
+            
+            window.alert = window.showToast; // Replace native alerts globally
+
+            // Custom Confirms Overrides
+            window.customConfirm = function(message, onConfirm) {
+                let overlay = document.getElementById('custom-confirm-overlay');
+                if(!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'custom-confirm-overlay';
+                    overlay.innerHTML = `
+                        <div class="custom-confirm-box">
+                            <div class="custom-confirm-title">Please Confirm Action</div>
+                            <div class="custom-confirm-message"></div>
+                            <div class="custom-confirm-actions">
+                                <button class="btn btn-secondary" id="custom-confirm-cancel">Cancel</button>
+                                <button class="btn btn-danger" id="custom-confirm-ok">Proceed</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                
+                overlay.querySelector('.custom-confirm-message').textContent = message;
+                overlay.style.display = 'flex';
+                void overlay.offsetWidth;
+                overlay.classList.add('show');
+
+                const closeConfirm = () => {
+                    overlay.classList.remove('show');
+                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                };
+
+                overlay.querySelector('#custom-confirm-cancel').onclick = closeConfirm;
+                overlay.querySelector('#custom-confirm-ok').onclick = () => { closeConfirm(); onConfirm(); };
+            };
+        });
+
+        // Admin Tab Routing
+        const adminOverlay = document.getElementById('adminOverlay');
+        document.getElementById('openAdminModalBtn').addEventListener('click', () => { adminOverlay.style.display = 'flex'; });
+        document.getElementById('closeLoginBtn').addEventListener('click', () => { adminOverlay.style.display = 'none'; });
+        document.getElementById('closeDashboardBtn').addEventListener('click', () => { adminOverlay.style.display = 'none'; });
+
+        document.getElementById('tabLeadsBtn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('leadsSection').style.display = 'block';
+            document.getElementById('casesSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+        });
+        document.getElementById('tabCasesBtn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('tabLeadsBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('casesSection').style.display = 'block';
+            document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+        });
+        document.getElementById('tabSettingsBtn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('tabLeadsBtn').classList.remove('active');
+            document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('settingsSection').style.display = 'block';
+            document.getElementById('casesSection').style.display = 'none';
+            document.getElementById('leadsSection').style.display = 'none';
+        });
+    </script>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
