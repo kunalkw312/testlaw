@@ -228,27 +228,21 @@
             .hero-text p { font-size: 1.05em; }
             .hero-buttons { justify-content: center; }
             .hero-buttons .btn { width: 100%; margin: 5px 0; }
-            
             .details-wrapper { padding: 30px 20px; }
             .details-banner { height: 220px; }
             .details-content { padding: 25px; }
             .details-content h1 { font-size: 1.8em; }
-            
             .section-header h2 { font-size: 2em; }
             .cases-section, .faq-section, .form-wrapper { padding: 40px 20px; }
-            
             .cases-controls input { width: 100%; max-width: none; }
-            
             form.contact-form { grid-template-columns: 1fr; padding: 25px; }
             form.contact-form textarea, .full-width, form.contact-form label.checkbox-label, form.contact-form .btn { grid-column: span 1; }
-            
             #adminOverlay { padding: 10px; }
             .login-box { padding: 30px 20px; }
             .admin-dashboard { height: 95vh; border-radius: 8px; }
             .admin-header { flex-direction: column; align-items: flex-start; padding: 15px; }
             .admin-header .close-dashboard-btn { position: absolute; top: 15px; right: 15px; }
             .admin-body { padding: 15px; }
-            
             .timeline { padding-left: 20px; }
             .timeline-item::before { left: -26px; }
         }
@@ -330,8 +324,7 @@
                 <input type="text" id="frontendSearchCases" placeholder="Search parameters (e.g., Pharma, Defect)...">
                 <select id="frontendFilterCases">
                     <option value="All">All Categories</option>
-                    <!-- Dynamically populated from database -->
-                </select>
+                    </select>
             </div>
 
             <div class="cases-grid" id="frontendCasesList"></div>
@@ -363,8 +356,7 @@
         <div class="details-wrapper">
             <a class="back-link" onclick="navigateToPage('cases')">← Back to Cases Directory</a>
             
-            <div class="details-hero" id="dynamicCaseDetailContainer">
-                </div>
+            <div class="details-hero" id="dynamicCaseDetailContainer"></div>
         </div>
     </main>
 
@@ -454,8 +446,7 @@
             <div class="full-width">
                 <select id="globalLeadCategory" required>
                     <option value="">-- Select Legal Category Regulating Your Case --</option>
-                    <!-- Dynamically populated from database -->
-                </select>
+                    </select>
             </div>
 
             <textarea id="globalLeadMessage" rows="6" placeholder="Provide accurate event descriptions, product names, diagnosis records, or critical date timelines..." required></textarea>
@@ -497,9 +488,9 @@
             </div>
             <div>
                 <h3>CONTACT DETAILS</h3>
-                <p id="footerTel">Tel Support: +1 (555) 000-0000</p>
-                <p id="footerEmail">✉ Queries: legal@lawsuitfiles.com</p>
-                <p id="footerAddress">📍 Intake: New York, United States</p>
+                <p id="footerTel">Tel Support: Loading...</p>
+                <p id="footerEmail">✉ Queries: Loading...</p>
+                <p id="footerAddress">📍 Intake: Loading...</p>
             </div>
         </div>
         <div class="footer-bottom">
@@ -515,8 +506,8 @@
             <h2>Admin Login</h2>
             <p>Sign in to manage active website databases</p>
             <form id="adminLoginForm">
-                <input type="email" id="adminEmail" placeholder="Email Address (admin@gmail.com)" required>
-                <input type="password" id="adminPassword" placeholder="Security Password (admin1234)" required>
+                <input type="email" id="adminEmail" placeholder="Email Address" required>
+                <input type="password" id="adminPassword" placeholder="Security Password" required>
                 <button type="submit">Login Securely</button>
             </form>
             <button class="close-login-btn-bottom" id="closeLoginBtn">Cancel / Close</button>
@@ -528,8 +519,7 @@
                 <div class="admin-nav">
                     <button class="active" id="tabLeadsBtn">View Leads</button>
                     <button id="tabCasesBtn">Manage Cases</button>
-                    <button id="tabCategoriesBtn">Categories</button>
-                    <button id="tabSettingsBtn">Settings</button>
+                    <button id="tabSettingsBtn">Settings & Categories</button>
                     <button class="logout-btn" id="adminLogoutBtn">Logout</button>
                 </div>
                 <button class="close-dashboard-btn" id="closeDashboardBtn">&times;</button>
@@ -544,8 +534,7 @@
                             <div style="flex: 1; min-width: 200px;">
                                 <select id="adminLeadFilter">
                                     <option value="All">All Categories</option>
-                                    <!-- Dynamically populated from database -->
-                                </select>
+                                    </select>
                             </div>
                             <button id="exportCsvBtn" class="btn btn-secondary" style="padding: 8px 15px;">Export to CSV</button>
                         </div>
@@ -559,8 +548,7 @@
                                     <th>Phone</th>
                                     <th>Category</th>
                                     <th>Message Details</th>
-                                    <th style="width: 100px;">Actions</th>
-                                </tr>
+                                    <th style="width: 120px;">Actions</th> </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -576,13 +564,12 @@
                     <form class="admin-form" id="addCaseForm">
                         <input type="hidden" id="editCaseTargetId" value="">
                         <input type="text" id="newCaseTitle" placeholder="Case Title" required>
-                        <input type="url" id="newCaseImageUrl" placeholder="Case Tile Image URL (Optional)">
                         <div style="width: 100%;">
                             <select id="newCaseCategory" required>
                                 <option value="">Select Category</option>
-                                <!-- Dynamically populated from database -->
-                            </select>
+                                </select>
                         </div>
+                        <input type="url" id="newCaseImageUrl" placeholder="Case Header Image URL (e.g. https://example.com/image.jpg)" required>
                         <textarea id="newCaseDesc" rows="4" placeholder="Case Description & Eligibility Requirements" required></textarea>
                         <button type="submit" id="adminFormSubmitBtn" class="btn">Add Case to Website</button>
                     </form>
@@ -595,30 +582,6 @@
                                     <th>Case Title</th>
                                     <th>Category</th>
                                     <th style="width: 180px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="categoriesSection" style="display: none;">
-                    <div class="dashboard-header-flex">
-                        <h3>Manage Dynamic Categories</h3>
-                    </div>
-                    
-                    <form class="admin-form" id="addCategoryForm">
-                        <input type="text" id="newCategoryName" placeholder="New Category Name (e.g. Mass Tort Litigation)" required>
-                        <button type="submit" id="adminCategorySubmitBtn" class="btn">Add Category</button>
-                    </form>
-
-                    <h3>Active Categories List</h3>
-                    <div class="table-responsive">
-                        <table class="admin-table" id="adminCategoriesTable">
-                            <thead>
-                                <tr>
-                                    <th>Category Title</th>
-                                    <th style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -642,6 +605,25 @@
                         
                         <button type="submit" class="btn" style="margin-top: 15px;">Save Updates Globally</button>
                     </form>
+
+                    <div class="dashboard-header-flex" style="margin-top: 40px;">
+                        <h3>Manage Categories</h3>
+                    </div>
+                    <form class="admin-form" id="addCategoryForm" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <input type="text" id="newCategoryName" placeholder="New Category Name (e.g., Toxic Exposure)" required style="flex: 1; min-width: 250px;">
+                        <button type="submit" class="btn">Add Category</button>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="admin-table" id="adminCategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th style="width: 150px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
 
             </main>
@@ -683,34 +665,54 @@
             }
         });
 
-        // ==========================================
-        // DYNAMIC CUSTOM DROPDOWN SYSTEM
-        // ==========================================
-        
-        // This unified function creates OR updates the custom dropdown UI
-        // It allows app.js to safely call it whenever it injects new <option> tags.
-        window.updateCustomSelect = function(selectId) {
-            const select = document.getElementById(selectId);
-            if(!select) return;
+        // Setup dynamic custom select initialization
+        window.initCustomSelects = function() {
+            // Cleanup existing custom wrappers to avoid duplication when repopulating
+            document.querySelectorAll('.custom-select-container').forEach(container => {
+                const select = container.querySelector('select');
+                if (select) {
+                    select.style.display = ''; 
+                    container.parentNode.insertBefore(select, container);
+                }
+                container.remove();
+            });
 
-            let wrapper = select.parentNode;
-            
-            // Build the initial DOM wrapper if it does not exist
-            if (!wrapper.classList.contains('custom-select-container')) {
-                wrapper = document.createElement('div');
+            // Convert Native Selects to Styled Custom Dropdowns
+            document.querySelectorAll('select').forEach(select => {
+                const wrapper = document.createElement('div');
                 wrapper.className = 'custom-select-container';
                 select.parentNode.insertBefore(wrapper, select);
                 wrapper.appendChild(select);
-                select.style.display = 'none'; // Keep hidden for FormData processing
+                select.style.display = 'none';
 
                 const trigger = document.createElement('div');
                 trigger.className = 'custom-select-trigger';
-                trigger.innerHTML = `<span></span><span>▼</span>`;
+                trigger.innerHTML = `<span>${select.options[select.selectedIndex]?.text || 'Select'}</span><span>▼</span>`;
                 wrapper.appendChild(trigger);
 
                 const optionsList = document.createElement('div');
                 optionsList.className = 'custom-select-options';
                 wrapper.appendChild(optionsList);
+
+                Array.from(select.options).forEach((option, index) => {
+                    if(option.value === "" && index === 0) return;
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'custom-option';
+                    optDiv.textContent = option.text;
+                    optDiv.dataset.value = option.value;
+                    if(select.value === option.value) optDiv.classList.add('selected');
+                    
+                    optDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        select.value = option.value;
+                        trigger.querySelector('span').textContent = option.text;
+                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                        optDiv.classList.add('selected');
+                        optionsList.classList.remove('open');
+                        select.dispatchEvent(new Event('change'));
+                    });
+                    optionsList.appendChild(optDiv);
+                });
 
                 trigger.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -719,54 +721,34 @@
                     });
                     optionsList.classList.toggle('open');
                 });
-            }
-
-            // Repopulate and synchronize logic based on actual select options
-            const triggerSpan = wrapper.querySelector('.custom-select-trigger span');
-            const optionsList = wrapper.querySelector('.custom-select-options');
-            
-            // Render currently selected item on trigger
-            triggerSpan.textContent = select.options[select.selectedIndex]?.text || 'Select';
-            optionsList.innerHTML = ''; // clear out old UI list
-            
-            Array.from(select.options).forEach((option, index) => {
-                if(option.value === "" && index === 0) return; // Skip placeholder option
-                
-                const optDiv = document.createElement('div');
-                optDiv.className = 'custom-option';
-                optDiv.textContent = option.text;
-                optDiv.dataset.value = option.value;
-                if(select.value === option.value) optDiv.classList.add('selected');
-                
-                optDiv.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    select.value = option.value;
-                    triggerSpan.textContent = option.text;
-                    optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
-                    optDiv.classList.add('selected');
-                    optionsList.classList.remove('open');
-                    select.dispatchEvent(new Event('change'));
-                });
-                optionsList.appendChild(optDiv);
             });
         };
 
-        // Expose a lighter syncing tool strictly for value matching from code
-        window.syncCustomSelect = function(selectId) {
-            window.updateCustomSelect(selectId);
-        };
-
-        // Initialize Native Dropdowns, Toasts & Modals
         document.addEventListener('DOMContentLoaded', () => {
             const initialHash = window.location.hash.replace('#', '') || 'home';
             if(initialHash.startsWith('case-details')) { navigateToPage('cases'); } else { navigateToPage(initialHash); }
 
-            // Apply custom styling initially
-            ['frontendFilterCases', 'globalLeadCategory', 'adminLeadFilter', 'newCaseCategory'].forEach(id => window.updateCustomSelect(id));
+            window.initCustomSelects();
 
             document.addEventListener('click', () => {
                 document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
             });
+
+            // Expose syncing tool so JS can artificially update dropdown text later
+            window.syncCustomSelect = function(selectId) {
+                const select = document.getElementById(selectId);
+                if(select && select.parentNode.classList.contains('custom-select-container')) {
+                    const triggerSpan = select.parentNode.querySelector('.custom-select-trigger span');
+                    const selectedOption = select.options[select.selectedIndex];
+                    if(triggerSpan && selectedOption) {
+                        triggerSpan.textContent = selectedOption.text;
+                        const optionsList = select.parentNode.querySelector('.custom-select-options');
+                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                        const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
+                        if(activeOpt) activeOpt.classList.add('selected');
+                    }
+                }
+            };
 
             // Custom Toast Overrides
             window.showToast = function(message, type = 'success') {
@@ -796,7 +778,7 @@
                 setTimeout(removeToast, 4000);
             };
             
-            window.alert = window.showToast; // Replace native alerts globally
+            window.alert = window.showToast; 
 
             // Custom Confirms Overrides
             window.customConfirm = function(message, onConfirm) {
@@ -841,30 +823,16 @@
         document.getElementById('tabLeadsBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
-            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('leadsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
-            document.getElementById('categoriesSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabCasesBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
-            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('casesSection').style.display = 'block';
-            document.getElementById('leadsSection').style.display = 'none';
-            document.getElementById('categoriesSection').style.display = 'none';
-            document.getElementById('settingsSection').style.display = 'none';
-        });
-        document.getElementById('tabCategoriesBtn').addEventListener('click', function() {
-            this.classList.add('active');
-            document.getElementById('tabLeadsBtn').classList.remove('active');
-            document.getElementById('tabCasesBtn').classList.remove('active');
-            document.getElementById('tabSettingsBtn').classList.remove('active');
-            document.getElementById('categoriesSection').style.display = 'block';
-            document.getElementById('casesSection').style.display = 'none';
             document.getElementById('leadsSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
@@ -872,11 +840,9 @@
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
-            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('settingsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
             document.getElementById('leadsSection').style.display = 'none';
-            document.getElementById('categoriesSection').style.display = 'none';
         });
     </script>
 
