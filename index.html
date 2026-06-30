@@ -223,7 +223,6 @@
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
             nav { justify-content: center; width: 100%; gap: 15px; }
             
-            /* Hidden on mobile explicitly to address your UI request */
             .header-actions { display: none; }
             
             .hero { flex-direction: column; text-align: center; padding: 40px 20px; gap: 30px; }
@@ -333,12 +332,7 @@
                 <input type="text" id="frontendSearchCases" placeholder="Search parameters (e.g., Pharma, Defect)...">
                 <select id="frontendFilterCases">
                     <option value="All">All Categories</option>
-                    <option value="Civil Litigation">Civil Litigation</option>
-                    <option value="Criminal Cases">Criminal Cases</option>
-                    <option value="Family Law">Family Law</option>
-                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                </select>
+                    </select>
             </div>
 
             <div class="cases-grid" id="frontendCasesList"></div>
@@ -461,12 +455,7 @@
             <div class="full-width">
                 <select id="globalLeadCategory" required>
                     <option value="">-- Select Legal Category Regulating Your Case --</option>
-                    <option value="Civil Litigation">Civil Litigation</option>
-                    <option value="Criminal Cases">Criminal Cases</option>
-                    <option value="Family Law">Family Law</option>
-                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                </select>
+                    </select>
             </div>
 
             <textarea id="globalLeadMessage" rows="6" placeholder="Provide accurate event descriptions, product names, diagnosis records, or critical date timelines..." required></textarea>
@@ -539,6 +528,7 @@
                 <div class="admin-nav">
                     <button class="active" id="tabLeadsBtn">View Leads</button>
                     <button id="tabCasesBtn">Manage Cases</button>
+                    <button id="tabCategoriesBtn">Categories</button>
                     <button id="tabSettingsBtn">Settings</button>
                     <button class="logout-btn" id="adminLogoutBtn">Logout</button>
                 </div>
@@ -554,12 +544,7 @@
                             <div style="flex: 1; min-width: 200px;">
                                 <select id="adminLeadFilter">
                                     <option value="All">All Categories</option>
-                                    <option value="Civil Litigation">Civil Litigation</option>
-                                    <option value="Criminal Cases">Criminal Cases</option>
-                                    <option value="Family Law">Family Law</option>
-                                    <option value="Corporate & Business Law">Corporate & Business Law</option>
-                                    <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                                </select>
+                                    </select>
                             </div>
                             <button id="exportCsvBtn" class="btn btn-secondary" style="padding: 8px 15px;">Export to CSV</button>
                         </div>
@@ -589,16 +574,15 @@
                     <form class="admin-form" id="addCaseForm">
                         <input type="hidden" id="editCaseTargetId" value="">
                         <input type="text" id="newCaseTitle" placeholder="Case Title" required>
+                        
                         <div style="width: 100%;">
                             <select id="newCaseCategory" required>
                                 <option value="">Select Category</option>
-                                <option value="Civil Litigation">Civil Litigation</option>
-                                <option value="Criminal Cases">Criminal Cases</option>
-                                <option value="Family Law">Family Law</option>
-                                <option value="Corporate & Business Law">Corporate & Business Law</option>
-                                <option value="Personal Injury & Accident Claims">Personal Injury & Accident Claims</option>
-                            </select>
+                                </select>
                         </div>
+                        
+                        <input type="url" id="newCaseImage" placeholder="Case Display Image URL (e.g., https://example.com/image.jpg)">
+                        
                         <textarea id="newCaseDesc" rows="4" placeholder="Case Description & Eligibility Requirements" required></textarea>
                         <button type="submit" id="adminFormSubmitBtn" class="btn">Add Case to Website</button>
                     </form>
@@ -611,6 +595,31 @@
                                     <th>Case Title</th>
                                     <th>Category</th>
                                     <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="categoriesSection" style="display: none;">
+                    <div class="dashboard-header-flex">
+                        <h3>Manage Case Categories</h3>
+                    </div>
+                    <form class="admin-form" id="addCategoryForm">
+                        <label for="newCategoryName" style="font-weight: 600; color: #334155;">Create New Category</label>
+                        <div style="display: flex; gap: 15px; margin-top: 10px; align-items: flex-start;">
+                            <input type="text" id="newCategoryName" placeholder="e.g., Environmental Law" required style="flex: 1;">
+                            <button type="submit" class="btn" id="addCategoryBtn">Add Category</button>
+                        </div>
+                    </form>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table" id="adminCategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -680,13 +689,49 @@
             const initialHash = window.location.hash.replace('#', '') || 'home';
             if(initialHash.startsWith('case-details')) { navigateToPage('cases'); } else { navigateToPage(initialHash); }
 
-            // Convert Native Selects to Styled Custom Dropdowns
+            // Apply custom styling to all native selects currently in DOM
             document.querySelectorAll('select').forEach(select => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'custom-select-container';
-                select.parentNode.insertBefore(wrapper, select);
-                wrapper.appendChild(select);
-                select.style.display = 'none'; // Keep hidden for FormData processing
+                window.rebuildCustomSelect(select.id);
+            });
+
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
+            });
+
+            // Expose syncing tool so JS can artificially update dropdown text later
+            window.syncCustomSelect = function(selectId) {
+                const select = document.getElementById(selectId);
+                if(select && select.parentNode.classList.contains('custom-select-container')) {
+                    const triggerSpan = select.parentNode.querySelector('.custom-select-trigger span');
+                    const selectedOption = select.options[select.selectedIndex];
+                    if(triggerSpan && selectedOption) {
+                        triggerSpan.textContent = selectedOption.text;
+                        const optionsList = select.parentNode.querySelector('.custom-select-options');
+                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                        const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
+                        if(activeOpt) activeOpt.classList.add('selected');
+                    }
+                }
+            };
+            
+            // Rebuild tool for dynamically injected options via app.js
+            window.rebuildCustomSelect = function(selectId) {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                let wrapper = select.parentNode;
+                if (wrapper.classList.contains('custom-select-container')) {
+                    const trigger = wrapper.querySelector('.custom-select-trigger');
+                    const optionsList = wrapper.querySelector('.custom-select-options');
+                    if (trigger) trigger.remove();
+                    if (optionsList) optionsList.remove();
+                } else {
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'custom-select-container';
+                    select.parentNode.insertBefore(wrapper, select);
+                    wrapper.appendChild(select);
+                    select.style.display = 'none'; 
+                }
 
                 const trigger = document.createElement('div');
                 trigger.className = 'custom-select-trigger';
@@ -724,26 +769,6 @@
                     });
                     optionsList.classList.toggle('open');
                 });
-            });
-
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
-            });
-
-            // Expose syncing tool so JS can artificially update dropdown text later
-            window.syncCustomSelect = function(selectId) {
-                const select = document.getElementById(selectId);
-                if(select && select.parentNode.classList.contains('custom-select-container')) {
-                    const triggerSpan = select.parentNode.querySelector('.custom-select-trigger span');
-                    const selectedOption = select.options[select.selectedIndex];
-                    if(triggerSpan && selectedOption) {
-                        triggerSpan.textContent = selectedOption.text;
-                        const optionsList = select.parentNode.querySelector('.custom-select-options');
-                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
-                        const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
-                        if(activeOpt) activeOpt.classList.add('selected');
-                    }
-                }
             };
 
             // Custom Toast Overrides
@@ -774,7 +799,7 @@
                 setTimeout(removeToast, 4000);
             };
             
-            window.alert = window.showToast; // Replace native alerts globally
+            window.alert = window.showToast; 
 
             // Custom Confirms Overrides
             window.customConfirm = function(message, onConfirm) {
@@ -810,7 +835,7 @@
             };
         });
 
-        // Admin Tab Routing
+        // Admin Tab Routing (Updated for Categories tab)
         const adminOverlay = document.getElementById('adminOverlay');
         document.getElementById('openAdminModalBtn').addEventListener('click', () => { adminOverlay.style.display = 'flex'; });
         document.getElementById('closeLoginBtn').addEventListener('click', () => { adminOverlay.style.display = 'none'; });
@@ -819,16 +844,30 @@
         document.getElementById('tabLeadsBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('leadsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabCasesBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('casesSection').style.display = 'block';
+            document.getElementById('leadsSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+        });
+        document.getElementById('tabCategoriesBtn').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('tabLeadsBtn').classList.remove('active');
+            document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
+            document.getElementById('categoriesSection').style.display = 'block';
+            document.getElementById('casesSection').style.display = 'none';
             document.getElementById('leadsSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
@@ -836,8 +875,10 @@
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
+            document.getElementById('tabCategoriesBtn').classList.remove('active');
             document.getElementById('settingsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
+            document.getElementById('categoriesSection').style.display = 'none';
             document.getElementById('leadsSection').style.display = 'none';
         });
     </script>
