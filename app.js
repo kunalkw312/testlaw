@@ -1,10 +1,20 @@
 // ==========================================
 // FIREBASE INTEGRATION & STATE MANAGEMENT
 // ==========================================
-import { db } from './config.js';
+import { db, auth } from './config.js';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Global Memory State (Filled by Firebase on load)
+// Mapping of structural categories to their corresponding asset filenames
+const CATEGORY_IMAGES = {
+    "Civil Litigation": "assets/Civil Litigation.jpg",
+    "Criminal Cases": "assets/Criminal Cases.jpg",
+    "Family Law": "assets/Family Law.jpg",
+    "Corporate & Business Law": "assets/Corporate & Business Law.jpg",
+    "Personal Injury & Accident Claims": "assets/Personal Injury & Accident Claims.jpg"
+};
+
+// Global Memory State (Starts empty, filled by Firebase on load)
 let settingsData = {
     tel: "+1 (555) 000-0000",
     email: "legal@lawsuitfiles.com",
@@ -12,11 +22,10 @@ let settingsData = {
 };
 let casesData = [];
 let leadsData = [];
-let categoriesData = []; // Dynamic store for user-managed categories
 
-// Helper to handle customizable tile images with a clean fallback layout
-function getCaseImage(item) {
-    return item.imageUrl && item.imageUrl.trim() !== "" ? item.imageUrl : "https://via.placeholder.com/400x250?text=Legal+Case";
+// Helper to gracefully fallback if an image asset is missing
+function getCaseImage(category) {
+    return CATEGORY_IMAGES[category] || "https://via.placeholder.com/400x250?text=Legal+Case";
 }
 
 // ==========================================
@@ -30,25 +39,20 @@ async function fetchDatabaseRecords() {
         if (settingsSnap.exists()) {
             settingsData = settingsSnap.data();
         } else {
-            // Seed default configuration parameters if document does not exist yet
+            // Seed initial settings if none exist
             await setDoc(doc(db, "settings", "global"), settingsData);
         }
 
-        // 2. Fetch Dynamically Managed Categories
-        const categoriesSnap = await getDocs(collection(db, "categories"));
-        categoriesData = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // 3. Fetch Active Cases
+        // 2. Fetch Active Cases
         const casesSnap = await getDocs(collection(db, "cases"));
         casesData = casesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // 4. Fetch Submitted Leads
+        // 3. Fetch Submitted Leads
         const leadsSnap = await getDocs(collection(db, "leads"));
         leadsData = leadsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Render synced content onto the frontend UI components
+        // Render data onto the UI
         renderSettings();
-        renderCategoriesUI();
         renderPublicCases();
         renderAdminDashboard();
     } catch (error) {
@@ -79,61 +83,7 @@ function renderSettings() {
     if (adminAddress) adminAddress.value = settingsData.address;
 }
 
-function renderCategoriesUI() {
-    // 1. Rebuild Public Directory Dropdown Filter
-    const frontendFilter = document.getElementById('frontendFilterCases');
-    if (frontendFilter) {
-        frontendFilter.innerHTML = `<option value="All">All Categories</option>` +
-            categoriesData.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        if (window.rebuildCustomSelect) window.rebuildCustomSelect('frontendFilterCases');
-    }
-
-    // 2. Rebuild Global Contact Intake Form Dropdown Selection
-    const globalLeadCategory = document.getElementById('globalLeadCategory');
-    if (globalLeadCategory) {
-        globalLeadCategory.innerHTML = `<option value="">-- Select Legal Category Regulating Your Case --</option>` +
-            categoriesData.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        if (window.rebuildCustomSelect) window.rebuildCustomSelect('globalLeadCategory');
-    }
-
-    // 3. Rebuild Admin Board Lead Directory Dropdown Filter
-    const adminLeadFilter = document.getElementById('adminLeadFilter');
-    if (adminLeadFilter) {
-        adminLeadFilter.innerHTML = `<option value="All">All Categories</option>` +
-            categoriesData.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        if (window.rebuildCustomSelect) window.rebuildCustomSelect('adminLeadFilter');
-    }
-
-    // 4. Rebuild Admin Board "Add/Edit Case" Dropdown Selection
-    const newCaseCategory = document.getElementById('newCaseCategory');
-    if (newCaseCategory) {
-        newCaseCategory.innerHTML = `<option value="">Select Category</option>` +
-            categoriesData.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-        if (window.rebuildCustomSelect) window.rebuildCustomSelect('newCaseCategory');
-    }
-
-    // 5. Populate Admin Management Table Rows for Categories Tab
-    const categoriesTableBody = document.querySelector('#adminCategoriesTable tbody');
-    if (categoriesTableBody) {
-        if (categoriesData.length === 0) {
-            categoriesTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No custom categories added yet.</td></tr>`;
-        } else {
-            categoriesTableBody.innerHTML = categoriesData.map(c => `
-                <tr>
-                    <td><strong>${c.name}</strong></td>
-                    <td>
-                        <button class="btn btn-danger btn-category-delete" data-id="${c.id}" style="padding: 6px 12px; font-size: 0.85em;">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        categoriesTableBody.querySelectorAll('.btn-category-delete').forEach(btn => {
-            btn.addEventListener('click', () => deleteCategoryTracker(btn.getAttribute('data-id')));
-        });
-    }
-}
-
+// Handles client-side live search and category filtering
 function renderPublicCases() {
     const gridContainer = document.getElementById('frontendCasesList');
     if (!gridContainer) return;
@@ -156,7 +106,7 @@ function renderPublicCases() {
     gridContainer.innerHTML = filtered.map(item => `
         <div class="case-card" data-id="${item.id}">
             <div class="case-img-wrap">
-                <img src="${getCaseImage(item)}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
+                <img src="${getCaseImage(item.category)}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
             </div>
             <div class="case-card-body">
                 <span class="case-category">${item.category}</span>
@@ -190,7 +140,7 @@ function showCaseDetailPage(caseId) {
 
     detailsContainer.innerHTML = `
         <div class="details-banner">
-            <img src="${getCaseImage(caseObj)}" alt="${caseObj.category}" onerror="this.src='https://via.placeholder.com/1100x380?text=Investigation+Banner'">
+            <img src="${getCaseImage(caseObj.category)}" alt="${caseObj.category}" onerror="this.src='https://via.placeholder.com/1100x380?text=Investigation+Banner'">
         </div>
         <div class="details-content">
             <span class="case-category" style="margin-bottom: 15px;">${caseObj.category}</span>
@@ -202,7 +152,7 @@ function showCaseDetailPage(caseId) {
     const globalSelect = document.getElementById('globalLeadCategory');
     if (globalSelect) {
         globalSelect.value = caseObj.category;
-        if (window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
+        if(window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
     }
 
     if (typeof window.navigateToPage === 'function') window.navigateToPage('case-details');
@@ -212,18 +162,18 @@ function forwardToContactWithCategory(categoryName) {
     const globalSelect = document.getElementById('globalLeadCategory');
     if (globalSelect) {
         globalSelect.value = categoryName;
-        if (window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
+        if(window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
     }
     if (typeof window.navigateToPage === 'function') window.navigateToPage('connect');
-
+    
     const formSection = document.getElementById('globalContactSection');
-    if (formSection) formSection.scrollIntoView({ behavior: 'smooth' });
+    if(formSection) formSection.scrollIntoView({ behavior: 'smooth' });
 }
 
 function renderAdminDashboard() {
     const leadsTableBody = document.querySelector('#adminLeadsTable tbody');
     const leadFilter = document.getElementById('adminLeadFilter').value;
-
+    
     if (leadsTableBody) {
         const filteredLeads = leadsData.filter(l => leadFilter === 'All' || l.category === leadFilter);
         if (filteredLeads.length === 0) {
@@ -280,11 +230,10 @@ function loadCaseIntoAdminForm(caseId) {
     document.getElementById('editCaseTargetId').value = targetCase.id;
     document.getElementById('newCaseTitle').value = targetCase.title;
     document.getElementById('newCaseCategory').value = targetCase.category;
-    document.getElementById('newCaseImage').value = targetCase.imageUrl || "";
     document.getElementById('newCaseDesc').value = targetCase.description;
 
-    // Sync Custom Select UI text value indicator markers
-    if (window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
+    // Sync Custom Select UI
+    if(window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
 
     document.getElementById('adminFormHeadline').innerText = "⚡ Edit Case Parameters Mode";
     document.getElementById('adminFormSubmitBtn').innerText = "Save Modified Changes";
@@ -297,9 +246,8 @@ function loadCaseIntoAdminForm(caseId) {
 function clearAdminCaseFormState() {
     document.getElementById('editCaseTargetId').value = "";
     document.getElementById('addCaseForm').reset();
-    document.getElementById('newCaseImage').value = "";
-    if (window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
-
+    if(window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
+    
     document.getElementById('adminFormHeadline').innerText = "Add New Case Investigation";
     document.getElementById('adminFormSubmitBtn').innerText = "Add Case to Website";
     document.getElementById('adminFormSubmitBtn').className = "btn";
@@ -309,9 +257,12 @@ function clearAdminCaseFormState() {
 function deleteCaseTracker(caseId) {
     window.customConfirm("Are you sure you want to completely erase this case profile from the tracking records?", async () => {
         try {
+            // Delete record physically from Firebase
             await deleteDoc(doc(db, "cases", caseId));
+            
+            // Reconcile Local App State
             casesData = casesData.filter(c => c.id !== caseId);
-            if (document.getElementById('editCaseTargetId').value === caseId) clearAdminCaseFormState();
+            if(document.getElementById('editCaseTargetId').value === caseId) clearAdminCaseFormState();
 
             renderAdminDashboard();
             renderPublicCases();
@@ -323,27 +274,12 @@ function deleteCaseTracker(caseId) {
     });
 }
 
-function deleteCategoryTracker(catId) {
-    window.customConfirm("Are you sure you want to erase this category? (This will not clear cases bound to it automatically)", async () => {
-        try {
-            await deleteDoc(doc(db, "categories", catId));
-            categoriesData = categoriesData.filter(c => c.id !== catId);
-
-            renderCategoriesUI();
-            window.showToast("Category completely removed.");
-        } catch (error) {
-            console.error("Category Removal Error:", error);
-            window.showToast("Server rejected category erasure.", "error");
-        }
-    });
-}
-
 function exportLeadsToCSV() {
     if (leadsData.length === 0) {
         window.showToast("No structural data inside the collection to export.", "error");
         return;
     }
-
+    
     let csvContent = "data:text/csv;charset=utf-8,First Name,Last Name,Email,Phone,Category,Message\n";
     leadsData.forEach(l => {
         let cleanMsg = l.message ? l.message.replace(/"/g, '""') : "";
@@ -353,7 +289,7 @@ function exportLeadsToCSV() {
     const encodedUri = encodeURI(csvContent);
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", encodedUri);
-    downloadAnchor.setAttribute("download", `lawsuitfiles_leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadAnchor.setAttribute("download", `lawsuitfiles_leads_export_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     document.body.removeChild(downloadAnchor);
@@ -364,6 +300,19 @@ function exportLeadsToCSV() {
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Monitor Authentication State changes dynamically
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('adminLoginBox').style.display = 'none';
+            document.getElementById('adminDashboardBox').style.display = 'flex';
+            renderAdminDashboard();
+        } else {
+            document.getElementById('adminDashboardBox').style.display = 'none';
+            document.getElementById('adminLoginBox').style.display = 'block';
+            if(document.getElementById('adminOverlay')) document.getElementById('adminOverlay').style.display = 'none';
+        }
+    });
 
     document.getElementById('frontendSearchCases').addEventListener('input', renderPublicCases);
     document.getElementById('frontendFilterCases').addEventListener('change', renderPublicCases);
@@ -392,10 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const docRef = await addDoc(collection(db, "leads"), newLead);
             newLead.id = docRef.id;
             leadsData.push(newLead);
-
+            
             this.reset();
-            if (window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
-
+            if(window.syncCustomSelect) window.syncCustomSelect('globalLeadCategory');
+            
             window.showToast("Your secure information profile has been registered.");
             renderAdminDashboard();
         } catch (error) {
@@ -407,40 +356,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Admin Security Check
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+    // 2. Admin Security Check (Securely handles verification via Firebase Auth)
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value.trim();
+        const submitBtn = this.querySelector('button[type="submit"]');
 
-        if (email === "admin@gmail.com" && password === "admin1234") {
-            document.getElementById('adminLoginBox').style.display = 'none';
-            document.getElementById('adminDashboardBox').style.display = 'flex';
+        if(submitBtn) submitBtn.disabled = true;
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
             window.showToast("Authentication confirmed. Access granted.");
-            renderAdminDashboard();
-        } else {
+        } catch (error) {
+            console.error("Authentication Error:", error);
             window.showToast("Invalid clearance credentials.", "error");
+        } finally {
+            if(submitBtn) submitBtn.disabled = false;
         }
     });
 
     // 3. Admin Logout
-    document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-        document.getElementById('adminLoginForm').reset();
-        clearAdminCaseFormState();
-        document.getElementById('adminDashboardBox').style.display = 'none';
-        document.getElementById('adminLoginBox').style.display = 'block';
-        document.getElementById('adminOverlay').style.display = 'none';
-        window.showToast("Secure session terminated.");
+    document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            document.getElementById('adminLoginForm').reset();
+            clearAdminCaseFormState();
+            window.showToast("Secure session terminated.");
+        } catch (error) {
+            console.error("Sign Out Error:", error);
+            window.showToast("Failed to safely terminate session.", "error");
+        }
     });
 
-    // 4. Submit Admin Case (Create / Update image URL links configuration parameters)
+    // 4. Submit Admin Case (Create/Update via Firebase)
     document.getElementById('addCaseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-
+        
         const targetId = document.getElementById('editCaseTargetId').value;
         const titleVal = document.getElementById('newCaseTitle').value;
         const catVal = document.getElementById('newCaseCategory').value;
-        const imgVal = document.getElementById('newCaseImage').value; // Custom image link URL string content
         const descVal = document.getElementById('newCaseDesc').value;
 
         const submitBtn = document.getElementById('adminFormSubmitBtn');
@@ -452,23 +407,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetId) {
                 // Update Existing
                 await updateDoc(doc(db, "cases", targetId), {
-                    title: titleVal, category: catVal, imageUrl: imgVal, description: descVal
+                    title: titleVal, category: catVal, description: descVal
                 });
-
+                
                 const idx = casesData.findIndex(c => c.id === targetId);
-                if (idx !== -1) {
-                    casesData[idx] = { ...casesData[idx], title: titleVal, category: catVal, imageUrl: imgVal, description: descVal };
+                if(idx !== -1) {
+                    casesData[idx] = { ...casesData[idx], title: titleVal, category: catVal, description: descVal };
                 }
                 window.showToast("Case parameters successfully modified.");
                 clearAdminCaseFormState();
             } else {
                 // Insert New
                 const newCaseRef = await addDoc(collection(db, "cases"), {
-                    title: titleVal, category: catVal, imageUrl: imgVal, description: descVal, createdAt: new Date().toISOString()
+                    title: titleVal, category: catVal, description: descVal, createdAt: new Date().toISOString()
                 });
-                casesData.push({ id: newCaseRef.id, title: titleVal, category: catVal, imageUrl: imgVal, description: descVal });
+                casesData.push({ id: newCaseRef.id, title: titleVal, category: catVal, description: descVal });
                 this.reset();
-                if (window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
+                if(window.syncCustomSelect) window.syncCustomSelect('newCaseCategory');
                 window.showToast("New investigation active on frontend database.");
             }
             renderAdminDashboard();
@@ -482,41 +437,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 5. Category Management Intake Execution Pipeline Flow
-    document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const inputField = document.getElementById('newCategoryName');
-        const nameVal = inputField.value.trim();
-
-        if (nameVal === "") return;
-
-        const addBtn = document.getElementById('addCategoryBtn');
-        addBtn.disabled = true;
-        addBtn.innerText = "Processing...";
-
-        try {
-            const docRef = await addDoc(collection(db, "categories"), { name: nameVal });
-            categoriesData.push({ id: docRef.id, name: nameVal });
-
-            renderCategoriesUI();
-            inputField.value = "";
-            window.showToast("New legal category added successfully!");
-        } catch (error) {
-            console.error("Category Insertion Error:", error);
-            window.showToast("Failed to add category field records.", "error");
-        } finally {
-            addBtn.disabled = false;
-            addBtn.innerText = "Add Category";
-        }
-    });
-
-    // 6. Submit Global Settings (Firebase Parameters Update Sync Check)
+    // 5. Submit Global Settings (Firebase)
     document.getElementById('updateSettingsForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const submitBtn = this.querySelector('button[type=\"submit\"]');
+        const submitBtn = this.querySelector('button[type="submit"]');
         submitBtn.innerText = "Syncing Settings...";
         submitBtn.disabled = true;
-
+        
         const newSettings = {
             tel: document.getElementById('settingTel').value,
             email: document.getElementById('settingEmail').value,
