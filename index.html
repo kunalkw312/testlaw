@@ -222,10 +222,7 @@
         @media (max-width: 768px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
             nav { justify-content: center; width: 100%; gap: 15px; }
-            
-            /* Hidden on mobile explicitly to address your UI request */
             .header-actions { display: none; }
-            
             .hero { flex-direction: column; text-align: center; padding: 40px 20px; gap: 30px; }
             .hero-text h1 { font-size: 36px; }
             .hero-text p { font-size: 1.05em; }
@@ -333,7 +330,8 @@
                 <input type="text" id="frontendSearchCases" placeholder="Search parameters (e.g., Pharma, Defect)...">
                 <select id="frontendFilterCases">
                     <option value="All">All Categories</option>
-                    </select>
+                    <!-- Dynamically populated from database -->
+                </select>
             </div>
 
             <div class="cases-grid" id="frontendCasesList"></div>
@@ -456,7 +454,8 @@
             <div class="full-width">
                 <select id="globalLeadCategory" required>
                     <option value="">-- Select Legal Category Regulating Your Case --</option>
-                    </select>
+                    <!-- Dynamically populated from database -->
+                </select>
             </div>
 
             <textarea id="globalLeadMessage" rows="6" placeholder="Provide accurate event descriptions, product names, diagnosis records, or critical date timelines..." required></textarea>
@@ -545,7 +544,8 @@
                             <div style="flex: 1; min-width: 200px;">
                                 <select id="adminLeadFilter">
                                     <option value="All">All Categories</option>
-                                    </select>
+                                    <!-- Dynamically populated from database -->
+                                </select>
                             </div>
                             <button id="exportCsvBtn" class="btn btn-secondary" style="padding: 8px 15px;">Export to CSV</button>
                         </div>
@@ -576,11 +576,12 @@
                     <form class="admin-form" id="addCaseForm">
                         <input type="hidden" id="editCaseTargetId" value="">
                         <input type="text" id="newCaseTitle" placeholder="Case Title" required>
-                        <input type="url" id="newCaseImageUrl" placeholder="Case Image URL (Optional - e.g., https://...)">
+                        <input type="url" id="newCaseImageUrl" placeholder="Case Tile Image URL (Optional)">
                         <div style="width: 100%;">
                             <select id="newCaseCategory" required>
                                 <option value="">Select Category</option>
-                                </select>
+                                <!-- Dynamically populated from database -->
+                            </select>
                         </div>
                         <textarea id="newCaseDesc" rows="4" placeholder="Case Description & Eligibility Requirements" required></textarea>
                         <button type="submit" id="adminFormSubmitBtn" class="btn">Add Case to Website</button>
@@ -603,19 +604,21 @@
 
                 <div id="categoriesSection" style="display: none;">
                     <div class="dashboard-header-flex">
-                        <h3>Manage Case Categories</h3>
+                        <h3>Manage Dynamic Categories</h3>
                     </div>
-                    <form class="admin-form" id="addCategoryForm" style="display: flex; gap: 15px; align-items: center; max-width: 600px;">
-                        <input type="text" id="newCategoryName" placeholder="New Category Name (e.g., Medical Malpractice)" style="flex: 1; margin-bottom: 0;" required>
-                        <button type="submit" class="btn" style="white-space: nowrap;">Add Category</button>
+                    
+                    <form class="admin-form" id="addCategoryForm">
+                        <input type="text" id="newCategoryName" placeholder="New Category Name (e.g. Mass Tort Litigation)" required>
+                        <button type="submit" id="adminCategorySubmitBtn" class="btn">Add Category</button>
                     </form>
 
-                    <div class="table-responsive" style="max-width: 600px;">
+                    <h3>Active Categories List</h3>
+                    <div class="table-responsive">
                         <table class="admin-table" id="adminCategoriesTable">
                             <thead>
                                 <tr>
-                                    <th>Category Name</th>
-                                    <th style="width: 120px;">Actions</th>
+                                    <th>Category Title</th>
+                                    <th style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -680,91 +683,90 @@
             }
         });
 
-        // Initialize Custom Selects, Toasts & Modals
+        // ==========================================
+        // DYNAMIC CUSTOM DROPDOWN SYSTEM
+        // ==========================================
+        
+        // This unified function creates OR updates the custom dropdown UI
+        // It allows app.js to safely call it whenever it injects new <option> tags.
+        window.updateCustomSelect = function(selectId) {
+            const select = document.getElementById(selectId);
+            if(!select) return;
+
+            let wrapper = select.parentNode;
+            
+            // Build the initial DOM wrapper if it does not exist
+            if (!wrapper.classList.contains('custom-select-container')) {
+                wrapper = document.createElement('div');
+                wrapper.className = 'custom-select-container';
+                select.parentNode.insertBefore(wrapper, select);
+                wrapper.appendChild(select);
+                select.style.display = 'none'; // Keep hidden for FormData processing
+
+                const trigger = document.createElement('div');
+                trigger.className = 'custom-select-trigger';
+                trigger.innerHTML = `<span></span><span>▼</span>`;
+                wrapper.appendChild(trigger);
+
+                const optionsList = document.createElement('div');
+                optionsList.className = 'custom-select-options';
+                wrapper.appendChild(optionsList);
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-select-options').forEach(list => {
+                        if(list !== optionsList) list.classList.remove('open');
+                    });
+                    optionsList.classList.toggle('open');
+                });
+            }
+
+            // Repopulate and synchronize logic based on actual select options
+            const triggerSpan = wrapper.querySelector('.custom-select-trigger span');
+            const optionsList = wrapper.querySelector('.custom-select-options');
+            
+            // Render currently selected item on trigger
+            triggerSpan.textContent = select.options[select.selectedIndex]?.text || 'Select';
+            optionsList.innerHTML = ''; // clear out old UI list
+            
+            Array.from(select.options).forEach((option, index) => {
+                if(option.value === "" && index === 0) return; // Skip placeholder option
+                
+                const optDiv = document.createElement('div');
+                optDiv.className = 'custom-option';
+                optDiv.textContent = option.text;
+                optDiv.dataset.value = option.value;
+                if(select.value === option.value) optDiv.classList.add('selected');
+                
+                optDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    select.value = option.value;
+                    triggerSpan.textContent = option.text;
+                    optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+                    optDiv.classList.add('selected');
+                    optionsList.classList.remove('open');
+                    select.dispatchEvent(new Event('change'));
+                });
+                optionsList.appendChild(optDiv);
+            });
+        };
+
+        // Expose a lighter syncing tool strictly for value matching from code
+        window.syncCustomSelect = function(selectId) {
+            window.updateCustomSelect(selectId);
+        };
+
+        // Initialize Native Dropdowns, Toasts & Modals
         document.addEventListener('DOMContentLoaded', () => {
             const initialHash = window.location.hash.replace('#', '') || 'home';
             if(initialHash.startsWith('case-details')) { navigateToPage('cases'); } else { navigateToPage(initialHash); }
 
-            // Custom Select implementation function (exposed to window for re-initialization by app.js)
-            window.initializeCustomSelects = function() {
-                // Clear existing wrappers to prevent nesting if called multiple times
-                document.querySelectorAll('.custom-select-container').forEach(container => {
-                    const select = container.querySelector('select');
-                    if (select) {
-                        container.parentNode.insertBefore(select, container);
-                        select.style.display = 'block';
-                    }
-                    container.remove();
-                });
-
-                document.querySelectorAll('select').forEach(select => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'custom-select-container';
-                    select.parentNode.insertBefore(wrapper, select);
-                    wrapper.appendChild(select);
-                    select.style.display = 'none';
-
-                    const trigger = document.createElement('div');
-                    trigger.className = 'custom-select-trigger';
-                    trigger.innerHTML = `<span>${select.options[select.selectedIndex]?.text || 'Select'}</span><span>▼</span>`;
-                    wrapper.appendChild(trigger);
-
-                    const optionsList = document.createElement('div');
-                    optionsList.className = 'custom-select-options';
-                    wrapper.appendChild(optionsList);
-
-                    Array.from(select.options).forEach((option, index) => {
-                        if(option.value === "" && index === 0) return;
-                        const optDiv = document.createElement('div');
-                        optDiv.className = 'custom-option';
-                        optDiv.textContent = option.text;
-                        optDiv.dataset.value = option.value;
-                        if(select.value === option.value) optDiv.classList.add('selected');
-                        
-                        optDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            select.value = option.value;
-                            trigger.querySelector('span').textContent = option.text;
-                            optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
-                            optDiv.classList.add('selected');
-                            optionsList.classList.remove('open');
-                            select.dispatchEvent(new Event('change'));
-                        });
-                        optionsList.appendChild(optDiv);
-                    });
-
-                    trigger.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        document.querySelectorAll('.custom-select-options').forEach(list => {
-                            if(list !== optionsList) list.classList.remove('open');
-                        });
-                        optionsList.classList.toggle('open');
-                    });
-                });
-            };
-
-            // Call it on initial load
-            window.initializeCustomSelects();
+            // Apply custom styling initially
+            ['frontendFilterCases', 'globalLeadCategory', 'adminLeadFilter', 'newCaseCategory'].forEach(id => window.updateCustomSelect(id));
 
             document.addEventListener('click', () => {
                 document.querySelectorAll('.custom-select-options').forEach(list => list.classList.remove('open'));
             });
-
-            // Expose syncing tool so JS can artificially update dropdown text later
-            window.syncCustomSelect = function(selectId) {
-                const select = document.getElementById(selectId);
-                if(select && select.parentNode.classList.contains('custom-select-container')) {
-                    const triggerSpan = select.parentNode.querySelector('.custom-select-trigger span');
-                    const selectedOption = select.options[select.selectedIndex];
-                    if(triggerSpan && selectedOption) {
-                        triggerSpan.textContent = selectedOption.text;
-                        const optionsList = select.parentNode.querySelector('.custom-select-options');
-                        optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
-                        const activeOpt = optionsList.querySelector(`.custom-option[data-value="${selectedOption.value}"]`);
-                        if(activeOpt) activeOpt.classList.add('selected');
-                    }
-                }
-            };
 
             // Custom Toast Overrides
             window.showToast = function(message, type = 'success') {
@@ -839,22 +841,22 @@
         document.getElementById('tabLeadsBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabCasesBtn').classList.remove('active');
-            document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('tabCategoriesBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('leadsSection').style.display = 'block';
             document.getElementById('casesSection').style.display = 'none';
-            document.getElementById('settingsSection').style.display = 'none';
             document.getElementById('categoriesSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabCasesBtn').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('tabLeadsBtn').classList.remove('active');
-            document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('tabCategoriesBtn').classList.remove('active');
+            document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('casesSection').style.display = 'block';
             document.getElementById('leadsSection').style.display = 'none';
-            document.getElementById('settingsSection').style.display = 'none';
             document.getElementById('categoriesSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabCategoriesBtn').addEventListener('click', function() {
             this.classList.add('active');
@@ -862,8 +864,8 @@
             document.getElementById('tabCasesBtn').classList.remove('active');
             document.getElementById('tabSettingsBtn').classList.remove('active');
             document.getElementById('categoriesSection').style.display = 'block';
-            document.getElementById('leadsSection').style.display = 'none';
             document.getElementById('casesSection').style.display = 'none';
+            document.getElementById('leadsSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
         });
         document.getElementById('tabSettingsBtn').addEventListener('click', function() {
