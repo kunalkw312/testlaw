@@ -10,9 +10,9 @@ let settingsData = {
     email: "legal@lawsuitfiles.com",
     address: "New York, United States"
 };
+let categoriesData = [];
 let casesData = [];
 let leadsData = [];
-let categoriesData = [];
 
 // ==========================================
 // INITIAL DATABASE SYNC
@@ -42,7 +42,7 @@ async function fetchDatabaseRecords() {
 
         // Render data onto the UI
         renderSettings();
-        populateCategoryDropdowns();
+        renderCategories();
         renderPublicCases();
         renderAdminDashboard();
     } catch (error) {
@@ -56,7 +56,7 @@ async function fetchDatabaseRecords() {
 // ==========================================
 
 function renderSettings() {
-    // Update Public Footer
+    // Public Footer Updates
     const footerTel = document.getElementById('footerTel');
     const footerEmail = document.getElementById('footerEmail');
     const footerAddress = document.getElementById('footerAddress');
@@ -65,7 +65,7 @@ function renderSettings() {
     if (footerEmail) footerEmail.innerText = `✉ Queries: ${settingsData.email}`;
     if (footerAddress) footerAddress.innerText = `📍 Intake: ${settingsData.address}`;
 
-    // Update Admin Panel Inputs
+    // Admin Panel Updates
     const adminTel = document.getElementById('settingTel');
     const adminEmail = document.getElementById('settingEmail');
     const adminAddress = document.getElementById('settingAddress');
@@ -75,23 +75,35 @@ function renderSettings() {
     if (adminAddress) adminAddress.value = settingsData.address;
 }
 
-function populateCategoryDropdowns() {
-    const defaultAllOption = `<option value="All">All Categories</option>`;
-    const defaultSelectOption = `<option value="">-- Select Category --</option>`;
-    
+function renderCategories() {
     const categoryOptions = categoriesData.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-
-    // Public Filters
-    document.getElementById('frontendFilterCases').innerHTML = defaultAllOption + categoryOptions;
-    document.getElementById('globalLeadCategory').innerHTML = defaultSelectOption + categoryOptions;
     
-    // Admin Filters/Inputs
-    document.getElementById('adminLeadFilter').innerHTML = defaultAllOption + categoryOptions;
-    document.getElementById('newCaseCategory').innerHTML = defaultSelectOption + categoryOptions;
+    // Update Select Elements
+    document.getElementById('frontendFilterCases').innerHTML = `<option value="All">All Categories</option>${categoryOptions}`;
+    document.getElementById('adminLeadFilter').innerHTML = `<option value="All">All Categories</option>${categoryOptions}`;
+    document.getElementById('globalLeadCategory').innerHTML = `<option value="">-- Select Legal Category --</option>${categoryOptions}`;
+    document.getElementById('newCaseCategory').innerHTML = `<option value="">Select Category</option>${categoryOptions}`;
 
-    // Re-initialize custom styled selects defined in index.html
-    if (window.initializeCustomSelects) {
-        window.initializeCustomSelects();
+    // Re-initialize custom dropdown UI styling
+    if(window.initCustomSelects) window.initCustomSelects();
+
+    // Render Admin Categories Table
+    const catTableBody = document.querySelector('#adminCategoriesTable tbody');
+    if (catTableBody) {
+        if (categoriesData.length === 0) {
+            catTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No categories added yet.</td></tr>`;
+        } else {
+            catTableBody.innerHTML = categoriesData.map(c => `
+                <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td><button class="btn btn-danger btn-delete-cat" data-id="${c.id}" style="padding: 6px 12px; font-size: 0.85em;">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        catTableBody.querySelectorAll('.btn-delete-cat').forEach(btn => {
+            btn.addEventListener('click', () => deleteCategory(btn.getAttribute('data-id')));
+        });
     }
 }
 
@@ -115,22 +127,22 @@ function renderPublicCases() {
     }
 
     gridContainer.innerHTML = filtered.map(item => {
-        const imgUrl = item.imageUrl || "https://via.placeholder.com/400x250?text=Legal+Case";
+        const imageSrc = item.imageUrl || 'https://via.placeholder.com/400x250?text=Legal+Case';
         return `
-        <div class="case-card" data-id="${item.id}">
-            <div class="case-img-wrap">
-                <img src="${imgUrl}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
-            </div>
-            <div class="case-card-body">
-                <span class="case-category">${item.category}</span>
-                <h3>${item.title}</h3>
-                <p>${item.description.substring(0, 140)}${item.description.length > 140 ? '...' : ''}</p>
-                <div class="case-btn-group">
-                    <button class="btn btn-view-detail" data-id="${item.id}">View Detail</button>
-                    <button class="btn btn-secondary btn-tile-contact" data-category="${item.category}">Contact Us</button>
+            <div class="case-card" data-id="${item.id}">
+                <div class="case-img-wrap">
+                    <img src="${imageSrc}" alt="${item.category}" onerror="this.src='https://via.placeholder.com/400x250?text=Legal+Case'">
+                </div>
+                <div class="case-card-body">
+                    <span class="case-category">${item.category}</span>
+                    <h3>${item.title}</h3>
+                    <p>${item.description.substring(0, 140)}${item.description.length > 140 ? '...' : ''}</p>
+                    <div class="case-btn-group">
+                        <button class="btn btn-view-detail" data-id="${item.id}">View Detail</button>
+                        <button class="btn btn-secondary btn-tile-contact" data-category="${item.category}">Contact Us</button>
+                    </div>
                 </div>
             </div>
-        </div>
         `;
     }).join('');
 
@@ -139,9 +151,7 @@ function renderPublicCases() {
     });
 
     gridContainer.querySelectorAll('.btn-tile-contact').forEach(btn => {
-        btn.addEventListener('click', () => {
-            forwardToContactWithCategory(btn.getAttribute('data-category'));
-        });
+        btn.addEventListener('click', () => forwardToContactWithCategory(btn.getAttribute('data-category')));
     });
 }
 
@@ -152,11 +162,11 @@ function showCaseDetailPage(caseId) {
     const detailsContainer = document.getElementById('dynamicCaseDetailContainer');
     if (!detailsContainer) return;
 
-    const imgUrl = caseObj.imageUrl || "https://via.placeholder.com/1100x380?text=Investigation+Banner";
+    const imageSrc = caseObj.imageUrl || 'https://via.placeholder.com/1100x380?text=Investigation+Banner';
 
     detailsContainer.innerHTML = `
         <div class="details-banner">
-            <img src="${imgUrl}" alt="${caseObj.category}" onerror="this.src='https://via.placeholder.com/1100x380?text=Investigation+Banner'">
+            <img src="${imageSrc}" alt="${caseObj.category}" onerror="this.src='https://via.placeholder.com/1100x380?text=Investigation+Banner'">
         </div>
         <div class="details-content">
             <span class="case-category" style="margin-bottom: 15px;">${caseObj.category}</span>
@@ -187,7 +197,6 @@ function forwardToContactWithCategory(categoryName) {
 }
 
 function renderAdminDashboard() {
-    // 1. Leads Table
     const leadsTableBody = document.querySelector('#adminLeadsTable tbody');
     const leadFilter = document.getElementById('adminLeadFilter').value;
     
@@ -203,17 +212,16 @@ function renderAdminDashboard() {
                     <td>${l.phone}</td>
                     <td><span class="case-category" style="background:#475569">${l.category}</span></td>
                     <td style="font-size:0.9em; max-width: 250px; white-space: pre-wrap;">${l.message}</td>
-                    <td><button class="btn btn-danger btn-delete-lead" data-id="${l.id}" style="padding: 6px 12px; font-size: 0.85em;">Delete</button></td>
+                    <td><button class="btn btn-danger btn-admin-delete-lead" data-id="${l.id}" style="padding: 6px 10px; font-size: 0.85em;">Delete</button></td>
                 </tr>
             `).join('');
         }
-        
-        leadsTableBody.querySelectorAll('.btn-delete-lead').forEach(btn => {
-            btn.addEventListener('click', () => deleteLeadRecord(btn.getAttribute('data-id')));
+
+        leadsTableBody.querySelectorAll('.btn-admin-delete-lead').forEach(btn => {
+            btn.addEventListener('click', () => deleteLeadTracker(btn.getAttribute('data-id')));
         });
     }
 
-    // 2. Cases Table
     const casesTableBody = document.querySelector('#adminCasesTable tbody');
     if (casesTableBody) {
         if (casesData.length === 0) {
@@ -238,25 +246,6 @@ function renderAdminDashboard() {
         });
         casesTableBody.querySelectorAll('.btn-admin-delete').forEach(btn => {
             btn.addEventListener('click', () => deleteCaseTracker(btn.getAttribute('data-id')));
-        });
-    }
-
-    // 3. Categories Table
-    const catTableBody = document.querySelector('#adminCategoriesTable tbody');
-    if (catTableBody) {
-        if (categoriesData.length === 0) {
-            catTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No custom categories found.</td></tr>`;
-        } else {
-            catTableBody.innerHTML = categoriesData.map(c => `
-                <tr>
-                    <td><strong>${c.name}</strong></td>
-                    <td><button class="btn btn-danger btn-delete-cat" data-id="${c.id}" style="padding: 6px 12px; font-size: 0.85em;">Delete</button></td>
-                </tr>
-            `).join('');
-        }
-        
-        catTableBody.querySelectorAll('.btn-delete-cat').forEach(btn => {
-            btn.addEventListener('click', () => deleteCategoryTracker(btn.getAttribute('data-id')));
         });
     }
 }
@@ -313,32 +302,33 @@ function deleteCaseTracker(caseId) {
     });
 }
 
-function deleteLeadRecord(leadId) {
-    window.customConfirm("Permanently delete this lead submission? This action cannot be undone.", async () => {
+function deleteLeadTracker(leadId) {
+    window.customConfirm("Are you sure you want to permanently delete this lead data?", async () => {
         try {
             await deleteDoc(doc(db, "leads", leadId));
             leadsData = leadsData.filter(l => l.id !== leadId);
+            
             renderAdminDashboard();
-            window.showToast("Lead successfully removed.");
+            window.showToast("Lead successfully removed from the database.");
         } catch (error) {
-            console.error("Deletion Error:", error);
+            console.error("Lead Deletion Error:", error);
             window.showToast("Server refused deletion request.", "error");
         }
     });
 }
 
-function deleteCategoryTracker(catId) {
-    window.customConfirm("Delete this category? Cases using this category will keep their label but it won't appear in filters.", async () => {
+function deleteCategory(catId) {
+    window.customConfirm("Delete this category? Cases using this category will lose their filter association.", async () => {
         try {
             await deleteDoc(doc(db, "categories", catId));
             categoriesData = categoriesData.filter(c => c.id !== catId);
             
-            populateCategoryDropdowns();
-            renderAdminDashboard();
+            renderCategories();
             renderPublicCases();
-            window.showToast("Category removed.");
+            renderAdminDashboard();
+            window.showToast("Category successfully deleted.");
         } catch (error) {
-            console.error("Deletion Error:", error);
+            console.error("Category Deletion Error:", error);
             window.showToast("Server refused deletion request.", "error");
         }
     });
@@ -377,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportCsvBtn').addEventListener('click', exportLeadsToCSV);
     document.getElementById('cancelEditCaseBtn').addEventListener('click', clearAdminCaseFormState);
 
-    // 1. Submit Public Lead Form to Firebase
+    // 1. Submit Public Lead Form
     document.getElementById('globalContactForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = this.querySelector('button[type="submit"]');
@@ -413,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Admin Security Check (Hardcoded)
+    // 2. Admin Login (Hardcoded as requested)
     document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('adminEmail').value.trim();
@@ -439,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.showToast("Secure session terminated.");
     });
 
-    // 4. Submit Admin Case (Create/Update via Firebase)
+    // 4. Submit Admin Case (Create/Update)
     document.getElementById('addCaseForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -488,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 5. Submit Global Settings (Firebase)
+    // 5. Submit Global Settings
     document.getElementById('updateSettingsForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = this.querySelector('button[type="submit"]');
@@ -518,34 +508,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 6. Add New Category
     document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const catInput = document.getElementById('newCategoryName');
-        const catName = catInput.value.trim();
         const submitBtn = this.querySelector('button[type="submit"]');
-        
-        if (!catName) return;
-        
-        // Prevent duplicates
-        if (categoriesData.some(c => c.name.toLowerCase() === catName.toLowerCase())) {
-            window.showToast("Category already exists.", "error");
-            return;
-        }
-
-        submitBtn.innerText = "Adding...";
         submitBtn.disabled = true;
+        
+        const catName = document.getElementById('newCategoryName').value.trim();
 
         try {
             const newCatRef = await addDoc(collection(db, "categories"), { name: catName });
             categoriesData.push({ id: newCatRef.id, name: catName });
-            catInput.value = "";
             
-            populateCategoryDropdowns();
-            renderAdminDashboard();
-            window.showToast("Category successfully added.");
+            this.reset();
+            renderCategories();
+            window.showToast("New category successfully added.");
         } catch (error) {
-            console.error("Category Add Error:", error);
-            window.showToast("Failed to add category.", "error");
+            console.error("Category Addition Error:", error);
+            window.showToast("Failed to add new category.", "error");
         } finally {
-            submitBtn.innerText = "Add Category";
             submitBtn.disabled = false;
         }
     });
